@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>욕창 예방 우선순위 대시보드</title>
+<style>
+/* 기존 CSS 스타일 완벽 동일 유지 */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+.wrap { padding: 1rem; font-size: 14px; max-width: 600px; margin: 0 auto; }
+.top-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:1.25rem; }
+.stat-card { background:#f8f9fa; border-radius:8px; padding:.75rem 1rem; }
+.stat-label { font-size:12px; color:#5f6368; margin-bottom:4px; }
+.stat-val { font-size:22px; font-weight:500; }
+.red-val{color:#A32D2D;} .amber-val{color:#854F0B;} .green-val{color:#3B6D11;}
+.p-row { background:#ffffff; border:1px solid #e0e0e0; border-radius:8px; padding:.85rem 1rem; margin-bottom:8px; }
+.row-top { display:flex; align-items:center; gap:10px; flex-wrap:wrap; cursor:pointer; }
+.rank-badge { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:500; font-size:13px; flex-shrink:0; }
+.badge-red{background:#FCEBEB;color:#A32D2D;} .badge-amber{background:#FAEEDA;color:#854F0B;} .badge-green{background:#EAF3DE;color:#3B6D11;}
+.p-name{font-weight:500;} .room-lbl{font-weight:400;color:#5f6368;font-size:12px;}
+.a-pill{font-size:11px;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.pill-red{background:#FCEBEB;color:#A32D2D;} .pill-amber{background:#FAEEDA;color:#854F0B;} .pill-green{background:#EAF3DE;color:#3B6D11;}
+.chips{display:flex;align-items:center;gap:5px;margin-left:auto;}
+.chip{font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid #e0e0e0;color:#5f6368;background:#f8f9fa;white-space:nowrap;}
+.chip.cur{color:#202124;font-weight:500;border-color:#bdc1c6;}
+.chip.nxt{background:#EAF3DE;color:#3B6D11;border-color:#97C459;font-weight:500;}
+.chip.nxt-u{background:#FCEBEB;color:#A32D2D;border-color:#F09595;font-weight:500;}
+.more-btn{font-size:11px;padding:2px 9px;margin-left:4px;border:1px solid #bdc1c6;border-radius:4px;background:transparent;color:#5f6368;cursor:pointer;white-space:nowrap;}
+.more-btn:hover{background:#f8f9fa;}
+.s-bar-bg{height:3px;background:#f8f9fa;border-radius:2px;margin-top:8px;}
+.s-bar{height:3px;border-radius:2px;}
+.detail-panel{margin-top:10px;border-top:1px solid #e0e0e0;padding-top:10px;display:none;}
+.hm-wrap{margin-bottom:10px;}
+.hm-lbl{font-size:11px;color:#5f6368;margin-bottom:5px;display:flex;justify-content:space-between;}
+.hm-grid{display:flex;gap:2px;height:32px;}
+.hm-cell{flex:1;border-radius:2px;}
+.hm-leg{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:10px;color:#5f6368;flex-wrap:wrap;}
+.leg-sw{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.d-item{font-size:12px;color:#5f6368;}
+.d-val{font-size:13px;font-weight:500;color:#202124;}
+.act-box{font-size:12px;padding:6px 10px;border-radius:4px;background:#f8f9fa;margin-top:8px;display:flex;align-items:center;gap:6px;}
+.detail-page{display:none;padding:1rem; max-width: 600px; margin: 0 auto;}
+.dp-back{font-size:12px;color:#5f6368;cursor:pointer;margin-bottom:1rem;display:flex;align-items:center;gap:4px;}
+.dp-back:hover{color:#202124;}
+.dp-header{background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;padding:1rem 1.25rem;margin-bottom:12px;}
+.dp-hrow{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.dp-avatar{width:44px;height:44px;border-radius:50%;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:16px;color:#1967d2;flex-shrink:0;}
+.dp-name{font-size:16px;font-weight:500;color:#202124;}
+.dp-sub{font-size:12px;color:#5f6368;margin-top:2px;}
+.dp-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;}
+.dp-card{background:#f8f9fa;border-radius:4px;padding:.6rem .8rem;}
+.dp-card-lbl{font-size:11px;color:#5f6368;margin-bottom:3px;}
+.dp-card-val{font-size:15px;font-weight:500;color:#202124;}
+.dp-card-val.danger{color:#A32D2D;} .dp-card-val.success{color:#3B6D11;}
+.dp-section{background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;padding:1rem 1.25rem;margin-bottom:12px;}
+.dp-sec-title{font-size:13px;font-weight:500;color:#202124;margin-bottom:12px;}
+.factor-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;}
+.factor-name{width:72px;color:#5f6368;flex-shrink:0;}
+.factor-bar-bg{flex:1;height:8px;background:#f8f9fa;border-radius:4px;}
+.factor-bar{height:8px;border-radius:4px;}
+.factor-score{width:28px;text-align:right;font-weight:500;font-size:12px;}
+.tl-wrap{overflow-x:auto;}
+.tl-row{display:flex;gap:0;align-items:flex-start;margin-bottom:8px;}
+.tl-cell{flex:1;min-width:70px;text-align:center;}
+.tl-chip{display:inline-block;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:500;margin-bottom:6px;}
+.tl-chip.left{background:#E6F1FB;color:#185FA5;}
+.tl-chip.right{background:#EAF3DE;color:#3B6D11;}
+.tl-chip.supine{background:#FAEEDA;color:#854F0B;}
+.tl-line-row{display:flex;align-items:center;height:20px;}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:#888780;flex-shrink:0;margin:0 auto;}
+.tl-dot.active{background:#E24B4A;}
+.tl-seg{flex:1;height:2px;background:#e0e0e0;}
+.tl-seg.danger{background:#E24B4A;}
+.tl-time{font-size:11px;color:#5f6368;margin-top:4px;}
+.body-map-row{display:flex;gap:16px;align-items:flex-start;}
+.body-map-svg{flex:1;min-width:0;}
+.body-map-legend{flex-shrink:0;width:120px;}
+.bleg-title{font-size:12px;font-weight:500;color:#202124;margin-bottom:8px;}
+.bleg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6368;margin-bottom:6px;}
+.bleg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.bleg-spots-title{font-size:12px;font-weight:500;color:#202124;margin-top:12px;margin-bottom:8px;}
+.bleg-spot{display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6368;margin-bottom:4px;}
+.bleg-spot-dot{width:8px;height:8px;border-radius:50%;background:#E24B4A;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="list-view">
+  <div class="top-bar">
+    <div class="stat-card"><div class="stat-label">즉시 조치</div><div class="stat-val red-val" id="cnt-immediate">—</div></div>
+    <div class="stat-card"><div class="stat-label">주의</div><div class="stat-val amber-val" id="cnt-caution">—</div></div>
+    <div class="stat-card"><div class="stat-label">안정</div><div class="stat-val green-val" id="cnt-stable">—</div></div>
+  </div>
+  <div id="patient-list">Loading...</div>
+</div>
+
+<div class="detail-page" id="detail-page">
+  <div class="dp-back" onclick="closeDetail()">← 목록으로</div>
+  <div id="dp-content"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// UI 매핑용 상수
+const PLABELS={Left:'좌측위',Right:'우측위',Supine:'앙와위'};
+const PCOLORS={Left:['#E6F1FB','#B5D4F4','#85B7EB','#378ADD','#185FA5'],Right:['#EAF3DE','#C0DD97','#97C459','#639922','#3B6D11'],Supine:['#FAEEDA','#FAC775','#EF9F27','#BA7517','#854F0B']};
+
+const BODY_SPOTS = {
+  occiput:   {label:'후두부',    cx:97,  cy:28,  r:14},
+  scapula_l: {label:'좌견갑골',  cx:78,  cy:82,  r:12},
+  scapula_r: {label:'우견갑골',  cx:116, cy:82,  r:12},
+  sacrum:    {label:'천골/미골', cx:97,  cy:178, r:16},
+  heel_l:    {label:'좌발뒤꿈치',cx:81,  cy:330, r:10},
+  heel_r:    {label:'우발뒤꿈치',cx:113, cy:330, r:10},
+};
+
+let globalPatientsData = [];
+let radarChart = null;
+
+// 백엔드 API에서 데이터 불러오기
+async function fetchAndRenderPatients() {
+  try {
+    const response = await fetch('/api/patients');
+    const data = await response.json();
+    globalPatientsData = data;
+    renderList(globalPatientsData);
+  } catch (error) {
+    console.error("데이터 로딩 실패:", error);
+    document.getElementById('patient-list').innerHTML = '<p>데이터를 불러올 수 없습니다.</p>';
+  }
+}
+
+// 헬퍼 함수들 (새로운 JSON의 status 변수에 맞춤)
+function acol(a){return a==='immediate'?'red':a==='caution'?'amber':'green';}
+function albl(a){return a==='immediate'?'즉시 조치':a==='caution'?'주의':'안정';}
+function barcol(a){return a==='immediate'?'#E24B4A':a==='caution'?'#EF9F27':'#639922';}
+function fColor(v){return v>=70?'#E24B4A':v>=40?'#EF9F27':'#639922';}
+function spotColor(v){
+  if(v>=70) return {fill:'rgba(226,75,74,0.45)',stroke:'#A32D2D'};
+  if(v>=40) return {fill:'rgba(239,159,39,0.4)',stroke:'#854F0B'};
+  return {fill:'rgba(99,153,34,0.3)',stroke:'#3B6D11'};
+}
+
+function postureFill(pos,ratio){const r=PCOLORS[pos]||PCOLORS.Supine;return r[Math.min(Math.floor(ratio*(r.length-0.01)),r.length-1)];}
+function buildHeatmap(hm){return hm.map(s=>`<div class="hm-cell" style="background:${postureFill(s.p,Math.min(s.m/120,1))}" title="${PLABELS[s.p]||s.p} ${s.m}분"></div>`).join('');}
+function toggleInline(id){const p=document.getElementById('inline-'+id);p.style.display=p.style.display==='block'?'none':'block';}
+
+function buildBodySVG(spotRisks) {
+  const spots = Object.entries(BODY_SPOTS).map(([key,s]) => {
+    const v = spotRisks[key] || 0;
+    const c = spotColor(v);
+    return `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5"/>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 194 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:180px;display:block;margin:0 auto;">
+    <g opacity="0.18" fill="#202124">
+      <ellipse cx="97" cy="22" rx="18" ry="18"/>
+      <rect x="68" y="40" width="58" height="5" rx="3"/>
+      <rect x="60" y="44" width="74" height="90" rx="18"/>
+      <rect x="34" y="48" width="22" height="70" rx="10"/>
+      <rect x="138" y="48" width="22" height="70" rx="10"/>
+      <rect x="70" y="132" width="54" height="70" rx="16"/>
+      <rect x="60" y="195" width="30" height="90" rx="14"/>
+      <rect x="104" y="195" width="30" height="90" rx="14"/>
+      <rect x="58" y="278" width="28" height="60" rx="12"/>
+      <rect x="108" y="278" width="28" height="60" rx="12"/>
+      <rect x="56" y="330" width="32" height="14" rx="7"/>
+      <rect x="106" y="330" width="32" height="14" rx="7"/>
+    </g>
+    ${spots}
+  </svg>`;
+}
+
+// 리스트 렌더링 함수
+function renderList(results){
+  const c=document.getElementById('patient-list');
+  c.innerHTML='';
+  
+  // 상단 통계 업데이트 (status 기준)
+  document.getElementById('cnt-immediate').textContent=results.filter(r=>r.status==='immediate').length+'명';
+  document.getElementById('cnt-caution').textContent=results.filter(r=>r.status==='caution').length+'명';
+  document.getElementById('cnt-stable').textContent=results.filter(r=>r.status==='stable').length+'명';
+  
+  results.forEach(p=>{
+    const col=acol(p.status), nc=p.status==='immediate'?'nxt-u':'nxt';
+    const hmLength=p.heatmap ? p.heatmap.length : 0;
+    
+    const div=document.createElement('div');
+    div.className='p-row';
+    div.innerHTML=`
+      <div class="row-top" onclick="toggleInline('${p.id}')">
+        <div class="rank-badge badge-${col}">${p.priority}</div>
+        <div><span class="p-name">${p.name}</span><span class="room-lbl"> ${p.room}</span></div>
+        <span class="a-pill pill-${col}">${albl(p.status)}</span>
+        <div class="chips">
+          <span class="chip cur">${PLABELS[p.currentPosition]||p.currentPosition}</span>
+          <span style="color:#bdc1c6">→</span>
+          <span class="chip ${nc}">${PLABELS[p.recommendedPosition]||p.recommendedPosition}</span>
+        </div>
+        <button class="more-btn" onclick="event.stopPropagation();openDetail('${p.id}')">상세</button>
+        <span style="font-size:13px;font-weight:500;color:#5f6368;margin-left:2px">${p.riskScore}</span>
+      </div>
+      <div class="s-bar-bg"><div class="s-bar" style="width:${Math.min(p.riskScore, 100)}%;background:${barcol(p.status)}"></div></div>
+      <div class="detail-panel" id="inline-${p.id}">
+        <div class="hm-wrap">
+          <div class="hm-lbl"><span>자세 경과 히트맵 (${hmLength}회)</span><span>${p.elapsedMinutes}분 경과</span></div>
+          <div class="hm-grid">${buildHeatmap(p.heatmap||[])}</div>
+        </div>
+        <div class="d-grid">
+          <div class="d-item">현재 체위<div class="d-val">${PLABELS[p.currentPosition]||p.currentPosition}</div></div>
+          <div class="d-item">권장 행동<div class="d-val">${p.recommendedAction}</div></div>
+        </div>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+
+// 상세 페이지 열기
+function openDetail(id){
+  const p=globalPatientsData.find(x=>x.id===id);
+  if(!p)return;
+  if(radarChart){radarChart.destroy();radarChart=null;}
+  
+  document.getElementById('list-view').style.display='none';
+  const dp=document.getElementById('detail-page');
+  dp.style.display='block';
+
+  const elapsed=`${Math.floor(p.elapsedMinutes/60)}h ${p.elapsedMinutes%60}m`;
+  const isOver = p.elapsedMinutes > p.maxAllowedMinutes;
+  const scoreColor=p.riskScore>=70?'danger':p.riskScore>=40?'amber-val':'success';
+  
+  // riskFactors의 Key값 매핑
+  const fNames={pressureDuration:'압력 지속',moisture:'습기',activity:'활동',mobility:'이동성',nutrition:'영양',frictionShear:'마찰/전단력',supportSurface:'지지표면'};
+  const factorRows=Object.entries(p.riskFactors).map(([k,v])=>`
+    <div class="factor-row">
+      <span class="factor-name">${fNames[k]||k}</span>
+      <div class="factor-bar-bg"><div class="factor-bar" style="width:${Math.max(0, Math.min(v, 100))}%;background:${fColor(v)}"></div></div>
+      <span class="factor-score" style="color:${fColor(v)}">${v}</span>
+    </div>`).join('');
+
+  const tlCells=(p.timeline||[]).map((t,i)=>{
+    const isLast=i===p.timeline.length-1;
+    const cls=t.p.toLowerCase();
+    return `<div class="tl-cell">
+      <div><span class="tl-chip ${cls}">${PLABELS[t.p]||t.p}</span></div>
+      <div class="tl-line-row"><div class="${isLast?'tl-dot active':'tl-dot'}"></div><div class="${isLast?'tl-seg danger':'tl-seg'}"></div></div>
+      <div class="tl-time">${t.t}</div>
+    </div>`;
+  }).join('');
+
+  const highSpots=Object.entries(p.spotRisks||{}).filter(([,v])=>v>=70).map(([k])=>BODY_SPOTS[k]?BODY_SPOTS[k].label:k);
+  const spotListHtml=highSpots.length
+    ? highSpots.map(s=>`<div class="bleg-spot"><div class="bleg-spot-dot"></div>${s}</div>`).join('')
+    : `<div style="font-size:11px;color:#5f6368">고위험 부위 없음</div>`;
+
+  dp.querySelector('#dp-content').innerHTML=`
+    <div class="dp-header">
+      <div class="dp-hrow">
+        <div class="dp-avatar">👤</div>
+        <div>
+          <div class="dp-name">${p.name}</div>
+          <div class="dp-sub">${p.room} · ${p.age}세 · ${p.gender} · 진단: ${p.diagnosis} · Braden: ${p.bradenScore}점</div>
+        </div>
+      </div>
+      <div class="dp-cards">
+        <div class="dp-card"><div class="dp-card-lbl">현재 자세</div><div class="dp-card-val" style="color:#185FA5">${PLABELS[p.currentPosition]||p.currentPosition}</div></div>
+        <div class="dp-card"><div class="dp-card-lbl">권장 조치</div><div class="dp-card-val success">${p.recommendedAction}</div></div>
+        <div class="dp-card"><div class="dp-card-lbl">경과 시간</div><div class="dp-card-val ${isOver?'danger':''}">${elapsed}</div><div style="font-size:10px;color:${isOver?'#A32D2D':'#5f6368'};margin-top:1px">${isOver?'초과':'정상 범위'}</div></div>
+        <div class="dp-card"><div class="dp-card-lbl">위험 점수</div><div class="dp-card-val ${scoreColor}">${p.riskScore}점</div><div style="font-size:10px;color:${p.riskScore>=70?'#A32D2D':p.riskScore>=40?'#854F0B':'#3B6D11'};margin-top:1px">${albl(p.status)}</div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div class="dp-section">
+        <div class="dp-sec-title">위험 요인 레이더</div>
+        <div style="position:relative;height:180px;"><canvas id="radar-chart"></canvas></div>
+      </div>
+      <div class="dp-section">
+        <div class="dp-sec-title">요인별 위험도</div>
+        ${factorRows}
+      </div>
+    </div>
+
+    <div class="dp-section" style="margin-bottom:12px;">
+      <div class="dp-sec-title">신체 부위별 압력 위험도</div>
+      <div class="body-map-row">
+        <div class="body-map-svg">${buildBodySVG(p.spotRisks||{})}</div>
+        <div class="body-map-legend">
+          <div class="bleg-title">위험도 범례</div>
+          <div class="bleg-item"><div class="bleg-dot" style="background:rgba(226,75,74,0.55);border:1.5px solid #A32D2D"></div>고위험</div>
+          <div class="bleg-item"><div class="bleg-dot" style="background:rgba(239,159,39,0.5);border:1.5px solid #854F0B"></div>주의</div>
+          <div class="bleg-item"><div class="bleg-dot" style="background:rgba(99,153,34,0.4);border:1.5px solid #3B6D11"></div>안전</div>
+          <div class="bleg-spots-title">주요 고위험 부위</div>
+          ${spotListHtml}
+        </div>
+      </div>
+    </div>
+
+    <div class="dp-section">
+      <div class="dp-sec-title">최근 체위 변화 타임라인</div>
+      <div class="tl-wrap"><div class="tl-row">${tlCells}</div></div>
+    </div>`;
+
+  requestAnimationFrame(()=>{
+    const ctx=document.getElementById('radar-chart');
+    if(!ctx)return;
+    const fKeys=Object.keys(p.riskFactors);
+    radarChart=new Chart(ctx,{
+      type:'radar',
+      data:{
+        labels:fKeys.map(k=>fNames[k]||k),
+        datasets:[{label:'위험도',data:fKeys.map(k=>p.riskFactors[k]),backgroundColor:'rgba(226,75,74,0.15)',borderColor:'#E24B4A',borderWidth:1.5,pointBackgroundColor:'#E24B4A',pointRadius:3}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},color:'#888780'},pointLabels:{font:{size:10},color:'#5F5E5A'}}}}
+    });
+  });
+}
+
+function closeDetail(){
+  if(radarChart){radarChart.destroy();radarChart=null;}
+  document.getElementById('detail-page').style.display='none';
+  document.getElementById('list-view').style.display='block';
+}
+
+// 앱 초기화 실행 및 10초마다 자동 새로고침 타이머 설정
+fetchAndRenderPatients();
+setInterval(fetchAndRenderPatients, 10000);
+</script>
+</body>
+</html>

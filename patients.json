@@ -1,0 +1,1086 @@
+{
+  "summary": {
+    "immediate": 2,
+    "caution": 4,
+    "stable": 4
+  },
+  "patients": [
+    {
+      "id": "P001",
+      "name": "환자01",
+      "room": "340호",
+      "age": 66,
+      "gender": "남성",
+      "diagnosis": "Spinal stenosis, lumbar region without n",
+      "bradenScore": 11,
+      "riskScore": 71,
+      "riskFactors": {
+        "pressureDuration": 50,
+        "moisture": 25,
+        "activity": 50,
+        "mobility": 75,
+        "nutrition": 33,
+        "frictionShear": 67,
+        "supportSurface": 24
+      },
+      "currentPosition": "Right",
+      "recommendedPosition": "Left",
+      "elapsedMinutes": 168,
+      "maxAllowedMinutes": 120,
+      "status": "immediate",
+      "mainRisks": [
+        "이동성 제한",
+        "마찰/전단력"
+      ],
+      "recommendedAction": "Left로 변경",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "caution",
+        "02": "caution",
+        "03": "noncompliant",
+        "04": "noncompliant",
+        "05": "compliant",
+        "06": "caution",
+        "07": "noncompliant",
+        "08": "caution",
+        "09": "compliant",
+        "10": "compliant",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "noncompliant",
+        "14": "delay",
+        "15": "compliant",
+        "16": "caution",
+        "17": "delay",
+        "18": "caution",
+        "19": "compliant",
+        "20": "compliant",
+        "21": "caution",
+        "22": "caution",
+        "23": "delay"
+      },
+      "skin": "wound",
+      "moisture": "dry",
+      "support": "air_static",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Left",
+          "m": 127
+        },
+        {
+          "p": "Right",
+          "m": 123
+        },
+        {
+          "p": "Supine",
+          "m": 105
+        },
+        {
+          "p": "Left",
+          "m": 103
+        },
+        {
+          "p": "Right",
+          "m": 168
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Right",
+          "t": "09:00"
+        },
+        {
+          "p": "Supine",
+          "t": "10:13"
+        },
+        {
+          "p": "Left",
+          "t": "11:24"
+        },
+        {
+          "p": "Right",
+          "t": "12:24"
+        },
+        {
+          "p": "Supine",
+          "t": "13:23"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 33,
+        "scapula_l": 34,
+        "scapula_r": 69,
+        "sacrum": 40,
+        "heel_l": 53,
+        "heel_r": 85
+      },
+      "priority": 1
+    },
+    {
+      "id": "P002",
+      "name": "환자02",
+      "room": "310호",
+      "age": 91,
+      "gender": "남성",
+      "diagnosis": "Displaced intertrochanteric fracture of ",
+      "bradenScore": 11,
+      "riskScore": 71,
+      "riskFactors": {
+        "pressureDuration": 50,
+        "moisture": 0,
+        "activity": 75,
+        "mobility": 50,
+        "nutrition": 67,
+        "frictionShear": 67,
+        "supportSurface": 38
+      },
+      "currentPosition": "Supine",
+      "recommendedPosition": "Left",
+      "elapsedMinutes": 141,
+      "maxAllowedMinutes": 120,
+      "status": "immediate",
+      "mainRisks": [
+        "활동 제한",
+        "영양 위험"
+      ],
+      "recommendedAction": "Left로 변경",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "compliant",
+        "02": "delay",
+        "03": "caution",
+        "04": "compliant",
+        "05": "compliant",
+        "06": "compliant",
+        "07": "noncompliant",
+        "08": "delay",
+        "09": "delay",
+        "10": "caution",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "noncompliant",
+        "15": "noncompliant",
+        "16": "delay",
+        "17": "delay",
+        "18": "compliant",
+        "19": "compliant",
+        "20": "delay",
+        "21": "noncompliant",
+        "22": "noncompliant",
+        "23": "compliant"
+      },
+      "skin": "blister",
+      "moisture": "dry",
+      "support": "foam",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Supine",
+          "m": 100
+        },
+        {
+          "p": "Left",
+          "m": 117
+        },
+        {
+          "p": "Right",
+          "m": 129
+        },
+        {
+          "p": "Supine",
+          "m": 141
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Supine",
+          "t": "09:00"
+        },
+        {
+          "p": "Left",
+          "t": "09:59"
+        },
+        {
+          "p": "Right",
+          "t": "10:55"
+        },
+        {
+          "p": "Supine",
+          "t": "12:08"
+        },
+        {
+          "p": "Left",
+          "t": "13:13"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 55,
+        "scapula_l": 44,
+        "scapula_r": 40,
+        "sacrum": 72,
+        "heel_l": 58,
+        "heel_r": 71
+      },
+      "priority": 2
+    },
+    {
+      "id": "P005",
+      "name": "환자05",
+      "room": "352호",
+      "age": 66,
+      "gender": "남성",
+      "diagnosis": "Unspecified septicemia",
+      "bradenScore": 12,
+      "riskScore": 65,
+      "riskFactors": {
+        "pressureDuration": 25,
+        "moisture": 25,
+        "activity": 75,
+        "mobility": 75,
+        "nutrition": 33,
+        "frictionShear": 33,
+        "supportSurface": 29
+      },
+      "currentPosition": "Supine",
+      "recommendedPosition": "Left",
+      "elapsedMinutes": 28,
+      "maxAllowedMinutes": 120,
+      "status": "caution",
+      "mainRisks": [
+        "활동 제한",
+        "이동성 제한"
+      ],
+      "recommendedAction": "피부 확인",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "caution",
+        "02": "compliant",
+        "03": "compliant",
+        "04": "compliant",
+        "05": "compliant",
+        "06": "delay",
+        "07": "compliant",
+        "08": "compliant",
+        "09": "delay",
+        "10": "delay",
+        "11": "delay",
+        "12": "compliant",
+        "13": "caution",
+        "14": "caution",
+        "15": "caution",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "compliant",
+        "19": "compliant",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "compliant",
+        "23": "compliant"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "foam",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Supine",
+          "m": 128
+        },
+        {
+          "p": "Left",
+          "m": 103
+        },
+        {
+          "p": "Right",
+          "m": 105
+        },
+        {
+          "p": "Supine",
+          "m": 28
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Supine",
+          "t": "09:00"
+        },
+        {
+          "p": "Left",
+          "t": "10:01"
+        },
+        {
+          "p": "Right",
+          "t": "11:07"
+        },
+        {
+          "p": "Supine",
+          "t": "12:21"
+        },
+        {
+          "p": "Left",
+          "t": "13:21"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 23,
+        "scapula_l": 14,
+        "scapula_r": 14,
+        "sacrum": 46,
+        "heel_l": 23,
+        "heel_r": 37
+      },
+      "priority": 3
+    },
+    {
+      "id": "P003",
+      "name": "환자03",
+      "room": "312호",
+      "age": 41,
+      "gender": "남성",
+      "diagnosis": "Pyogenic arthritis, unspecified",
+      "bradenScore": 13,
+      "riskScore": 59,
+      "riskFactors": {
+        "pressureDuration": 25,
+        "moisture": 25,
+        "activity": 50,
+        "mobility": 50,
+        "nutrition": 67,
+        "frictionShear": 33,
+        "supportSurface": 42
+      },
+      "currentPosition": "Left",
+      "recommendedPosition": "Right",
+      "elapsedMinutes": 86,
+      "maxAllowedMinutes": 120,
+      "status": "caution",
+      "mainRisks": [
+        "영양 위험"
+      ],
+      "recommendedAction": "피부 확인",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "caution",
+        "02": "caution",
+        "03": "compliant",
+        "04": "delay",
+        "05": "compliant",
+        "06": "delay",
+        "07": "caution",
+        "08": "compliant",
+        "09": "compliant",
+        "10": "compliant",
+        "11": "caution",
+        "12": "noncompliant",
+        "13": "compliant",
+        "14": "caution",
+        "15": "compliant",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "compliant",
+        "19": "delay",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "compliant",
+        "23": "delay"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Right",
+          "m": 106
+        },
+        {
+          "p": "Supine",
+          "m": 101
+        },
+        {
+          "p": "Left",
+          "m": 86
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Left",
+          "t": "09:00"
+        },
+        {
+          "p": "Right",
+          "t": "09:59"
+        },
+        {
+          "p": "Supine",
+          "t": "10:57"
+        },
+        {
+          "p": "Left",
+          "t": "11:55"
+        },
+        {
+          "p": "Right",
+          "t": "13:06"
+        },
+        {
+          "p": "Supine",
+          "t": "14:14"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 0,
+        "scapula_l": 40,
+        "scapula_r": 0,
+        "sacrum": 19,
+        "heel_l": 49,
+        "heel_r": 23
+      },
+      "priority": 4
+    },
+    {
+      "id": "P004",
+      "name": "환자04",
+      "room": "305호",
+      "age": 58,
+      "gender": "남성",
+      "diagnosis": "Drug-induced tremor",
+      "bradenScore": 13,
+      "riskScore": 59,
+      "riskFactors": {
+        "pressureDuration": 50,
+        "moisture": 25,
+        "activity": 75,
+        "mobility": 50,
+        "nutrition": 0,
+        "frictionShear": 33,
+        "supportSurface": 35
+      },
+      "currentPosition": "Left",
+      "recommendedPosition": "Right",
+      "elapsedMinutes": 82,
+      "maxAllowedMinutes": 120,
+      "status": "caution",
+      "mainRisks": [
+        "활동 제한"
+      ],
+      "recommendedAction": "피부 확인",
+      "positionTimeline": {
+        "00": "caution",
+        "01": "compliant",
+        "02": "compliant",
+        "03": "compliant",
+        "04": "compliant",
+        "05": "caution",
+        "06": "caution",
+        "07": "compliant",
+        "08": "caution",
+        "09": "compliant",
+        "10": "compliant",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "compliant",
+        "15": "compliant",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "compliant",
+        "19": "noncompliant",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "compliant",
+        "23": "delay"
+      },
+      "skin": "redness",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Supine",
+          "m": 103
+        },
+        {
+          "p": "Left",
+          "m": 109
+        },
+        {
+          "p": "Right",
+          "m": 127
+        },
+        {
+          "p": "Supine",
+          "m": 125
+        },
+        {
+          "p": "Left",
+          "m": 82
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Left",
+          "t": "09:00"
+        },
+        {
+          "p": "Right",
+          "t": "10:13"
+        },
+        {
+          "p": "Supine",
+          "t": "11:08"
+        },
+        {
+          "p": "Left",
+          "t": "12:11"
+        },
+        {
+          "p": "Right",
+          "t": "13:16"
+        },
+        {
+          "p": "Supine",
+          "t": "14:19"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 25,
+        "scapula_l": 68,
+        "scapula_r": 30,
+        "sacrum": 49,
+        "heel_l": 53,
+        "heel_r": 26
+      },
+      "priority": 5
+    },
+    {
+      "id": "P006",
+      "name": "환자06",
+      "room": "331호",
+      "age": 86,
+      "gender": "여성",
+      "diagnosis": "Mitral valve disorders",
+      "bradenScore": 16,
+      "riskScore": 41,
+      "riskFactors": {
+        "pressureDuration": 25,
+        "moisture": 0,
+        "activity": 50,
+        "mobility": 50,
+        "nutrition": 33,
+        "frictionShear": 0,
+        "supportSurface": 40
+      },
+      "currentPosition": "Right",
+      "recommendedPosition": "Left",
+      "elapsedMinutes": 68,
+      "maxAllowedMinutes": 120,
+      "status": "caution",
+      "mainRisks": [
+        "해당 없음"
+      ],
+      "recommendedAction": "피부 확인",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "delay",
+        "02": "compliant",
+        "03": "caution",
+        "04": "caution",
+        "05": "caution",
+        "06": "caution",
+        "07": "compliant",
+        "08": "compliant",
+        "09": "compliant",
+        "10": "noncompliant",
+        "11": "delay",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "compliant",
+        "15": "caution",
+        "16": "compliant",
+        "17": "caution",
+        "18": "compliant",
+        "19": "compliant",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "noncompliant",
+        "23": "compliant"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Supine",
+          "m": 109
+        },
+        {
+          "p": "Left",
+          "m": 103
+        },
+        {
+          "p": "Right",
+          "m": 68
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Right",
+          "t": "09:00"
+        },
+        {
+          "p": "Supine",
+          "t": "10:00"
+        },
+        {
+          "p": "Left",
+          "t": "11:02"
+        },
+        {
+          "p": "Right",
+          "t": "12:02"
+        },
+        {
+          "p": "Supine",
+          "t": "13:04"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 9,
+        "scapula_l": 1,
+        "scapula_r": 39,
+        "sacrum": 19,
+        "heel_l": -5,
+        "heel_r": 6
+      },
+      "priority": 6
+    },
+    {
+      "id": "P008",
+      "name": "환자08",
+      "room": "327호",
+      "age": 54,
+      "gender": "여성",
+      "diagnosis": "Aseptic necrosis of head and neck of fem",
+      "bradenScore": 17,
+      "riskScore": 35,
+      "riskFactors": {
+        "pressureDuration": 0,
+        "moisture": 0,
+        "activity": 50,
+        "mobility": 50,
+        "nutrition": 0,
+        "frictionShear": 33,
+        "supportSurface": 54
+      },
+      "currentPosition": "Left",
+      "recommendedPosition": "Right",
+      "elapsedMinutes": 61,
+      "maxAllowedMinutes": 120,
+      "status": "stable",
+      "mainRisks": [
+        "해당 없음"
+      ],
+      "recommendedAction": "상태 재평가",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "compliant",
+        "02": "compliant",
+        "03": "compliant",
+        "04": "compliant",
+        "05": "compliant",
+        "06": "compliant",
+        "07": "compliant",
+        "08": "compliant",
+        "09": "compliant",
+        "10": "compliant",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "caution",
+        "15": "compliant",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "compliant",
+        "19": "compliant",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "compliant",
+        "23": "compliant"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Right",
+          "m": 119
+        },
+        {
+          "p": "Supine",
+          "m": 105
+        },
+        {
+          "p": "Left",
+          "m": 61
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Left",
+          "t": "09:00"
+        },
+        {
+          "p": "Right",
+          "t": "09:57"
+        },
+        {
+          "p": "Supine",
+          "t": "11:09"
+        },
+        {
+          "p": "Left",
+          "t": "12:06"
+        },
+        {
+          "p": "Right",
+          "t": "13:06"
+        },
+        {
+          "p": "Supine",
+          "t": "14:17"
+        }
+      ],
+      "spotRisks": {
+        "occiput": -25,
+        "scapula_l": 7,
+        "scapula_r": -16,
+        "sacrum": -8,
+        "heel_l": 52,
+        "heel_r": 25
+      },
+      "priority": 7
+    },
+    {
+      "id": "P010",
+      "name": "환자10",
+      "room": "347호",
+      "age": 52,
+      "gender": "남성",
+      "diagnosis": "Hypertensive heart disease with heart fa",
+      "bradenScore": 17,
+      "riskScore": 35,
+      "riskFactors": {
+        "pressureDuration": 25,
+        "moisture": 0,
+        "activity": 50,
+        "mobility": 50,
+        "nutrition": 0,
+        "frictionShear": 0,
+        "supportSurface": 43
+      },
+      "currentPosition": "Right",
+      "recommendedPosition": "Left",
+      "elapsedMinutes": 74,
+      "maxAllowedMinutes": 120,
+      "status": "stable",
+      "mainRisks": [
+        "해당 없음"
+      ],
+      "recommendedAction": "상태 재평가",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "compliant",
+        "02": "compliant",
+        "03": "compliant",
+        "04": "compliant",
+        "05": "compliant",
+        "06": "compliant",
+        "07": "compliant",
+        "08": "compliant",
+        "09": "compliant",
+        "10": "compliant",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "compliant",
+        "15": "compliant",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "delay",
+        "19": "compliant",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "compliant",
+        "23": "compliant"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Supine",
+          "m": 101
+        },
+        {
+          "p": "Left",
+          "m": 118
+        },
+        {
+          "p": "Right",
+          "m": 74
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Right",
+          "t": "09:00"
+        },
+        {
+          "p": "Supine",
+          "t": "10:11"
+        },
+        {
+          "p": "Left",
+          "t": "11:11"
+        },
+        {
+          "p": "Right",
+          "t": "12:19"
+        }
+      ],
+      "spotRisks": {
+        "occiput": 1,
+        "scapula_l": 2,
+        "scapula_r": 38,
+        "sacrum": 29,
+        "heel_l": -13,
+        "heel_r": 9
+      },
+      "priority": 8
+    },
+    {
+      "id": "P007",
+      "name": "환자07",
+      "room": "320호",
+      "age": 52,
+      "gender": "남성",
+      "diagnosis": "Closed fracture of base of skull with su",
+      "bradenScore": 19,
+      "riskScore": 24,
+      "riskFactors": {
+        "pressureDuration": 0,
+        "moisture": 25,
+        "activity": 25,
+        "mobility": 25,
+        "nutrition": 0,
+        "frictionShear": 0,
+        "supportSurface": 26
+      },
+      "currentPosition": "Right",
+      "recommendedPosition": "Left",
+      "elapsedMinutes": 85,
+      "maxAllowedMinutes": 120,
+      "status": "stable",
+      "mainRisks": [
+        "해당 없음"
+      ],
+      "recommendedAction": "상태 재평가",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "compliant",
+        "02": "compliant",
+        "03": "compliant",
+        "04": "compliant",
+        "05": "compliant",
+        "06": "compliant",
+        "07": "compliant",
+        "08": "compliant",
+        "09": "compliant",
+        "10": "compliant",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "compliant",
+        "15": "compliant",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "compliant",
+        "19": "caution",
+        "20": "compliant",
+        "21": "caution",
+        "22": "compliant",
+        "23": "compliant"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Left",
+          "m": 114
+        },
+        {
+          "p": "Right",
+          "m": 121
+        },
+        {
+          "p": "Supine",
+          "m": 101
+        },
+        {
+          "p": "Left",
+          "m": 124
+        },
+        {
+          "p": "Right",
+          "m": 85
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Right",
+          "t": "09:00"
+        },
+        {
+          "p": "Supine",
+          "t": "09:57"
+        },
+        {
+          "p": "Left",
+          "t": "10:54"
+        },
+        {
+          "p": "Right",
+          "t": "12:00"
+        }
+      ],
+      "spotRisks": {
+        "occiput": -18,
+        "scapula_l": -19,
+        "scapula_r": 10,
+        "sacrum": -3,
+        "heel_l": -7,
+        "heel_r": 18
+      },
+      "priority": 9
+    },
+    {
+      "id": "P009",
+      "name": "환자09",
+      "room": "353호",
+      "age": 21,
+      "gender": "남성",
+      "diagnosis": "Unspecified asthma with (acute) exacerba",
+      "bradenScore": 21,
+      "riskScore": 12,
+      "riskFactors": {
+        "pressureDuration": 0,
+        "moisture": 0,
+        "activity": 25,
+        "mobility": 25,
+        "nutrition": -33,
+        "frictionShear": 0,
+        "supportSurface": 21
+      },
+      "currentPosition": "Left",
+      "recommendedPosition": "Right",
+      "elapsedMinutes": 83,
+      "maxAllowedMinutes": 120,
+      "status": "stable",
+      "mainRisks": [
+        "해당 없음"
+      ],
+      "recommendedAction": "상태 재평가",
+      "positionTimeline": {
+        "00": "compliant",
+        "01": "compliant",
+        "02": "compliant",
+        "03": "compliant",
+        "04": "delay",
+        "05": "compliant",
+        "06": "compliant",
+        "07": "compliant",
+        "08": "compliant",
+        "09": "delay",
+        "10": "compliant",
+        "11": "compliant",
+        "12": "compliant",
+        "13": "compliant",
+        "14": "compliant",
+        "15": "compliant",
+        "16": "compliant",
+        "17": "compliant",
+        "18": "compliant",
+        "19": "compliant",
+        "20": "compliant",
+        "21": "compliant",
+        "22": "compliant",
+        "23": "compliant"
+      },
+      "skin": "normal",
+      "moisture": "dry",
+      "support": "standard",
+      "history": false,
+      "heatmap": [
+        {
+          "p": "Left",
+          "m": 110
+        },
+        {
+          "p": "Right",
+          "m": 128
+        },
+        {
+          "p": "Supine",
+          "m": 128
+        },
+        {
+          "p": "Left",
+          "m": 83
+        }
+      ],
+      "timeline": [
+        {
+          "p": "Left",
+          "t": "09:00"
+        },
+        {
+          "p": "Right",
+          "t": "10:11"
+        },
+        {
+          "p": "Supine",
+          "t": "11:11"
+        },
+        {
+          "p": "Left",
+          "t": "12:15"
+        },
+        {
+          "p": "Right",
+          "t": "13:27"
+        },
+        {
+          "p": "Supine",
+          "t": "14:24"
+        }
+      ],
+      "spotRisks": {
+        "occiput": -23,
+        "scapula_l": 8,
+        "scapula_r": -17,
+        "sacrum": -10,
+        "heel_l": 8,
+        "heel_r": -13
+      },
+      "priority": 10
+    }
+  ]
+}
