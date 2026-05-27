@@ -5,7 +5,6 @@ from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 
-# 전역 변수로 환자 데이터를 메모리에 유지
 GLOBAL_PATIENTS = []
 
 def load_initial_data():
@@ -17,11 +16,15 @@ def load_initial_data():
     except Exception as e:
         print(f"데이터 로드 실패: {e}")
 
-# 서버 시작 시 데이터 최초 1회 로드
 load_initial_data()
 
+POSTURE_SPOT_WEIGHTS = {
+    "Supine": {"occiput": 0.8, "scapula_l": 0.5, "scapula_r": 0.5, "sacrum": 1.0, "heel_l": 0.6, "heel_r": 0.6},
+    "Left":   {"occiput": 0.2, "scapula_l": 0.9, "scapula_r": 0.0, "sacrum": 0.4, "heel_l": 0.9, "heel_r": 0.1},
+    "Right":  {"occiput": 0.2, "scapula_l": 0.0, "scapula_r": 0.9, "sacrum": 0.4, "heel_l": 0.1, "heel_r": 0.9}
+}
+
 def simulate_logical_changes():
-    """10초마다 환자의 세부 요인에 기반해 논리적으로 점수와 우선순위를 갱신합니다."""
     global GLOBAL_PATIENTS
     postures = ["Left", "Right", "Supine"]
     action_labels = {"Left": "좌측위", "Right": "우측위", "Supine": "앙와위"}
@@ -29,59 +32,73 @@ def simulate_logical_changes():
     for p in GLOBAL_PATIENTS:
         max_time = p.get('maxAllowedMinutes', 120)
         
-        # 1. 간호사 개입 시뮬레이션 (상태가 위험할수록 개입 확률 급증)
-        change_prob = 0.05
-        if p.get('status') == 'immediate':
-            change_prob = 0.70
-        elif p.get('status') == 'caution':
-            change_prob = 0.25
+        # 1. 🔥 실제 임상 프로토콜 기반 체위 변경 로직 🔥
+        needs_change = False
+        
+        # 조건 A: 체위 유지 시간이 권장 시간(120분)에 도달했거나 초과한 경우 (정규 체위 변경)
+        if p.get('elapsedMinutes', 0) >= max_time:
+            needs_change = True
+        # 조건 B: 120분이 안 되었더라도, 상태가 '즉시 조치(Immediate)' 위험 수준인 경우 (응급 개입)
+        elif p.get('status') == 'immediate':
+            needs_change = True
             
-        if random.random() < change_prob:
-            # 🟢 [체위 변경됨] -> 시스템이 직전에 '권장했던 체위'로 변경함
+        if needs_change:
+            # 🟢 [체위 변경] 간호사가 권장 체위로 환자의 자세를 변경함
             recommended = p.get('recommendedPosition')
-            
-            # 만약 권장 체위 데이터가 없거나 현재 체위와 같다면(예외 상황), 남은 체위 중 선택
             if not recommended or recommended == p.get('currentPosition'):
                 candidates = [pos for pos in postures if pos != p.get('currentPosition')]
                 recommended = random.choice(candidates)
                 
             p['currentPosition'] = recommended
-            p['elapsedMinutes'] = 0
+            p['elapsedMinutes'] = 0 # 체위 변경 후 경과 시간 0으로 초기화
         else:
-            # 🔴 [체위 유지됨] -> 경과 시간 15분씩 증가
+            # 🔴 [체위 유지] 아직 120분이 안 되었고 위험하지 않으므로 15분 경과
             p['elapsedMinutes'] += 15 
 
-        # 2. 히트맵(체위 유지 시간) 논리적 업데이트
+        # 2. 히트맵 업데이트
         if 'heatmap' not in p or not p['heatmap']:
             p['heatmap'] = [{"p": p['currentPosition'], "m": 15}]
         else:
             last_seg = p['heatmap'][-1]
             if last_seg['p'] == p['currentPosition']:
-                last_seg['m'] += 15 # 자세를 유지 중이면 블록의 시간이 진해짐
+                last_seg['m'] += 15 
             else:
                 p['heatmap'].append({"p": p['currentPosition'], "m": 15})
                 if len(p['heatmap']) > 6:
                     p['heatmap'].pop(0)
 
-        # 3. 위험 요인(factors) 합산을 통한 총점(riskScore) 산출
+        # 3. 위험 요인(factors) 합산을 통한 총점 산출
         if 'riskFactors' in p:
-            # 누워있는 시간에 비례하여 '압력 지속(pressureDuration)' 위험도 상승
             time_ratio = p['elapsedMinutes'] / max_time
             p['riskFactors']['pressureDuration'] = min(100, int(time_ratio * 100))
             
-            # 각 요인의 가중치를 곱해 종합적인 논리적 위험도 계산
             factors = p['riskFactors']
             calculated_score = (
-                factors.get('pressureDuration', 0) * 0.40 +  # 압력 40%
-                factors.get('frictionShear', 0) * 0.20 +    # 마찰 20%
-                factors.get('moisture', 0) * 0.15 +         # 습기 15%
-                factors.get('mobility', 0) * 0.15 +         # 이동성 15%
-                factors.get('nutrition', 0) * 0.10          # 영양 10%
+                factors.get('pressureDuration', 0) * 0.40 +
+                factors.get('frictionShear', 0) * 0.20 +
+                factors.get('moisture', 0) * 0.15 +
+                factors.get('mobility', 0) * 0.15 +
+                factors.get('nutrition', 0) * 0.10
             )
-            # 최종 점수에 소수점이 없도록 정수 처리
             p['riskScore'] = round(min(100, max(0, calculated_score)))
             
-        # 4. 점수에 따른 알림 상태 지정
+        # 4. 신체 부위별 압력 위험도(spotRisks) 논리적 갱신
+        if 'spotRisks' not in p:
+            p['spotRisks'] = {"occiput": 0, "scapula_l": 0, "scapula_r": 0, "sacrum": 0, "heel_l": 0, "heel_r": 0}
+            
+        current_pos = p['currentPosition']
+        weights = POSTURE_SPOT_WEIGHTS.get(current_pos, POSTURE_SPOT_WEIGHTS["Supine"])
+        pressure_duration = p.get('riskFactors', {}).get('pressureDuration', 0)
+        
+        braden = p.get('bradenScore', 15)
+        vulnerability_base = max(0, (23 - braden) * 1.5)
+        
+        for spot, weight in weights.items():
+            target_risk = min(100, (pressure_duration * weight) + vulnerability_base)
+            current_val = p['spotRisks'].get(spot, 0)
+            p['spotRisks'][spot] = round(current_val + (target_risk - current_val) * 0.3)
+
+        # 5. 점수에 따른 알림 상태
         score = p.get('riskScore', 0)
         if score >= 70:
             p['status'] = 'immediate'
@@ -90,7 +107,7 @@ def simulate_logical_changes():
         else:
             p['status'] = 'stable'
             
-        # 5. 권장 체위 도출 (히트맵 기준 가장 안 쓴 자세 추천)
+        # 6. 권장 체위 도출
         usage = {"Left": 0, "Right": 0, "Supine": 0}
         for seg in p.get('heatmap', []):
             usage[seg.get('p', 'Supine')] += seg.get('m', 1)
@@ -98,7 +115,7 @@ def simulate_logical_changes():
         cands = [pos for pos in postures if pos != p['currentPosition']]
         p['recommendedPosition'] = min(cands, key=lambda pos: usage.get(pos, 0))
         
-        # 6. 행동 지침 텍스트
+        # 7. 행동 지침 텍스트
         label = action_labels.get(p['recommendedPosition'], p['recommendedPosition'])
         if p['status'] == 'immediate':
             p['recommendedAction'] = f"{label}로 즉시 변경"
@@ -107,7 +124,7 @@ def simulate_logical_changes():
         else:
             p['recommendedAction'] = "상태 재평가"
             
-    # 7. 위험 점수(riskScore)를 기준으로 내림차순 정렬하여 순위(priority) 논리적 재할당
+    # 8. 정렬
     GLOBAL_PATIENTS.sort(key=lambda x: x.get('riskScore', 0), reverse=True)
     for i, p in enumerate(GLOBAL_PATIENTS):
         p['priority'] = i + 1
