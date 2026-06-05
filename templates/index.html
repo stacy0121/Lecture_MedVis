@@ -18,7 +18,7 @@
   --r-sm:6px;--r-md:10px;--r-lg:14px;
   --sh-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
   --sh-md:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
-  --font:\'Noto Sans KR\',sans-serif;--mono:\'DM Mono\',monospace;
+  --font:'Noto Sans KR',sans-serif;--mono:'DM Mono',monospace;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px;-webkit-font-smoothing:antialiased}
@@ -146,6 +146,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt-primary);min-h
 .sk-line{height:10px;background:var(--surface2);border-radius:4px;margin-bottom:8px}
 .sk-line.short{width:40%}.sk-line.mid{width:65%}
 @keyframes shimmer{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* 환자 실제 영상 */
+.patient-video-wrap{margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--sh-sm)}
+.patient-video-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid var(--border);font-size:11px;color:var(--txt-secondary);font-weight:600}
+.patient-video-status{font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px;background:var(--blue-light);color:var(--blue);white-space:nowrap}
+.patient-video{width:100%;display:block;background:#000;max-height:360px;object-fit:contain}
+.video-caption{padding:8px 10px;font-size:11px;color:var(--txt-secondary);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;line-height:1.4}
+.video-empty{margin-top:12px;padding:12px;border:1px dashed var(--border2);border-radius:var(--r-md);font-size:11px;color:var(--txt-tertiary);background:var(--surface2)}
+
 @media(max-width:480px){.dp-metrics{grid-template-columns:repeat(2,1fr)}.dp-two-col{grid-template-columns:1fr}.posture-flow{display:none}.stat-val{font-size:22px}}
 </style>
 </head>
@@ -208,12 +217,52 @@ function spotColor(v){
 function postureFill(pos,ratio){const r=PCOLORS[pos]||PCOLORS.Supine;return r[Math.min(Math.floor(ratio*(r.length-.01)),r.length-1)];}
 function elapsed2str(min){return min>=60?`${Math.floor(min/60)}h ${min%60}m`:`${min}m`;}
 function nowStr(){const d=new Date();return`${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;}
+function getVideoUrl(p){return p.videoUrl || (p.videoFile ? `/static/videos/${p.videoFile}` : '');}
+function confStr(v){return v===undefined||v===null||v===''?'—':`${Math.round(Number(v)*100)}%`;}
 
 function buildBodySVG(sr){
   const spots=Object.entries(BODY_SPOTS).map(([k,s])=>{const v=sr[k]||0,c=spotColor(v);return`<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5"/>`;}).join('');
   return`<svg viewBox="0 0 194 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:160px;display:block;margin:0 auto;"><g opacity=".15" fill="#1A1916"><ellipse cx="97" cy="22" rx="18" ry="18"/><rect x="68" y="40" width="58" height="5" rx="3"/><rect x="60" y="44" width="74" height="90" rx="18"/><rect x="34" y="48" width="22" height="70" rx="10"/><rect x="138" y="48" width="22" height="70" rx="10"/><rect x="70" y="132" width="54" height="70" rx="16"/><rect x="60" y="195" width="30" height="90" rx="14"/><rect x="104" y="195" width="30" height="90" rx="14"/><rect x="58" y="278" width="28" height="60" rx="12"/><rect x="108" y="278" width="28" height="60" rx="12"/><rect x="56" y="330" width="32" height="14" rx="7"/><rect x="106" y="330" width="32" height="14" rx="7"/></g>${spots}</svg>`;
 }
 function buildHeatmap(hm){return(hm||[]).map(s=>`<div class="hm-cell" style="background:${postureFill(s.p,Math.min(s.m/120,1))}" title="${PLABELS[s.p]||s.p} ${s.m}분"></div>`).join('');}
+
+function buildSummaryTimelineCells(p){
+  // postureSummaryTimeline은 백엔드에서 10초마다 최근 10초 동안 가장 많이 나온 체위를 1개씩 추가한 배열이다.
+  const src=(p.postureSummaryTimeline&&p.postureSummaryTimeline.length>0)
+    ?p.postureSummaryTimeline.slice(-6).map(x=>({p:x.p}))
+    :(p.heatmap||[]).slice(-6).map(x=>({p:x.p}));
+
+  return src.map((item,i,arr)=>{
+    const isLast=i===arr.length-1;
+    const cls=(item.p||'Supine').toLowerCase();
+    const timeLabel=isLast?'현재':`-${(arr.length-1-i)*10}초`;
+    return `<div class="tl-cell"><div><span class="tl-chip ${cls}">${PLABELS[item.p]||item.p}</span></div><div class="tl-line-row"><div class="${isLast?'tl-dot active':'tl-dot'}"></div><div class="${isLast?'tl-seg danger':'tl-seg'}"></div></div><div class="tl-time">${timeLabel}</div></div>`;
+  }).join('');
+}
+
+function updateDetailSummaryFromPatient(p){
+  if(!p || currentDetailId!==p.id)return;
+
+  const timelineEl=document.getElementById(`summary-timeline-${p.id}`);
+  if(timelineEl){
+    timelineEl.innerHTML=buildSummaryTimelineCells(p);
+  }
+
+  const recommendedEl=document.getElementById(`detail-recommended-${p.id}`);
+  if(recommendedEl){
+    recommendedEl.textContent=PLABELS[p.recommendedPosition]||p.recommendedPosition;
+  }
+
+  const elapsedEl=document.getElementById(`detail-elapsed-${p.id}`);
+  if(elapsedEl){
+    elapsedEl.textContent=elapsed2str(p.elapsedMinutes);
+  }
+
+  const scoreEl=document.getElementById(`detail-risk-score-${p.id}`);
+  if(scoreEl){
+    scoreEl.textContent=Math.round(p.riskScore);
+  }
+}
 
 function toggleInline(id){
   const el=document.getElementById('inline-'+id);if(!el)return;
@@ -240,7 +289,7 @@ function renderList(data){
         <div class="p-info"><div class="p-name">${p.name}</div><div class="p-meta">${p.room} · ${p.age}세 · ${p.gender}</div></div>
         <span class="status-pill ${col}">${albl(p.status)}</span>
         <div class="posture-flow">
-          <span class="p-chip">${PLABELS[p.currentPosition]||p.currentPosition}</span>
+          <span class="p-chip" id="list-current-${p.id}">${PLABELS[p.currentPosition]||p.currentPosition}</span>
           <span class="arrow-icon">→</span>
           <span class="p-chip ${nxtCls}">${PLABELS[p.recommendedPosition]||p.recommendedPosition}</span>
         </div>
@@ -284,14 +333,27 @@ function openDetail(id){
       <div class="factor-track"><div class="factor-fill" style="width:${Math.max(0,Math.min(v,100))}%;background:${fcolor(v)}"></div></div>
       <span class="factor-score" style="color:${fcolor(v)}">${v}</span>
     </div>`).join('');
-  const tlData=(p.heatmap||[]).slice(-6).map((seg,i,arr)=>({p:seg.p,t:i===arr.length-1?'현재':`-${(arr.length-1-i)*15}분`}));
-  const tlCells=tlData.map((t,i)=>{const isLast=i===tlData.length-1;const cls=t.p.toLowerCase();return`<div class="tl-cell"><div><span class="tl-chip ${cls}">${PLABELS[t.p]||t.p}</span></div><div class="tl-line-row"><div class="${isLast?'tl-dot active':'tl-dot'}"></div><div class="${isLast?'tl-seg danger':'tl-seg'}"></div></div><div class="tl-time">${t.t}</div></div>`;}).join('');
+  const tlCells=buildSummaryTimelineCells(p);
   const highSpots=Object.entries(p.spotRisks||{}).filter(([,v])=>v>=70).map(([k])=>BODY_SPOTS[k]?BODY_SPOTS[k].label:k);
   const spotListHtml=highSpots.length?highSpots.map(s=>`<div class="bleg-spot"><div class="bleg-spot-dot"></div>${s}</div>`).join(''):`<div style="font-size:11px;color:var(--txt-tertiary)">고위험 부위 없음</div>`;
   const alertBox=p.status==='immediate'
     ?`<div class="alert-box danger"><span class="alert-icon">🚨</span><div><strong>즉시 조치 필요</strong><br>장시간 ${PLABELS[p.currentPosition]} 유지로 압력 및 피부 손상 위험이 높습니다.<br><strong>권장: ${p.recommendedAction}</strong></div></div>`
     :p.status==='caution'
     ?`<div class="alert-box warn"><span class="alert-icon">⚠️</span><div><strong>주의 관찰 필요</strong><br>${p.recommendedAction}</div></div>`:'';
+  const videoUrl=getVideoUrl(p);
+  const videoBlock=videoUrl
+    ?`<div class="patient-video-wrap">
+        <div class="patient-video-head">
+          <span>실제 환자 체위 영상</span>
+          <span class="patient-video-status" id="video-posture-${p.id}">YOLO 분류 · ${PLABELS[p.currentPosition]||p.currentPosition}</span>
+        </div>
+        <video class="patient-video" id="patient-video-${p.id}" src="${videoUrl}" controls autoplay muted loop playsinline preload="metadata"></video>
+        <div class="video-caption">
+          <span>환자 ID: ${p.id}</span>
+          <span id="video-confidence-${p.id}">분류 신뢰도: ${confStr(p.postureConfidence)}</span>
+        </div>
+      </div>`
+    :`<div class="video-empty">연결된 환자 영상이 없습니다. patients.json에 <strong>videoFile</strong> 또는 백엔드 응답에 <strong>videoUrl</strong>을 추가하세요.</div>`;
 
   document.getElementById('dp-content').innerHTML=`
     <div class="dp-header">
@@ -301,11 +363,12 @@ function openDetail(id){
         <span class="status-pill ${acol(p.status)}" style="margin-left:auto;align-self:flex-start">${albl(p.status)}</span>
       </div>
       <div class="dp-metrics">
-        <div class="dp-metric"><div class="dp-metric-lbl">현재 체위</div><div class="dp-metric-val blue" style="font-size:13px;font-family:var(--font)">${PLABELS[p.currentPosition]||p.currentPosition}</div></div>
-        <div class="dp-metric"><div class="dp-metric-lbl">권장 체위</div><div class="dp-metric-val ok" style="font-size:13px;font-family:var(--font)">${PLABELS[p.recommendedPosition]||p.recommendedPosition}</div></div>
-        <div class="dp-metric"><div class="dp-metric-lbl">경과 시간</div><div class="dp-metric-val ${isOver?'danger':''}">${elapsed2str(p.elapsedMinutes)}</div><div class="dp-metric-sub">${isOver?'⚠ 초과':'정상 범위'}</div></div>
-        <div class="dp-metric"><div class="dp-metric-lbl">위험 점수</div><div class="dp-metric-val ${scoreCol}">${Math.round(p.riskScore)}</div><div class="dp-metric-sub">${p.riskScore>=70?'위험':p.riskScore>=40?'주의':'안전'}</div></div>
+        <div class="dp-metric"><div class="dp-metric-lbl">현재 체위</div><div class="dp-metric-val blue" id="detail-current-${p.id}" style="font-size:13px;font-family:var(--font)">${PLABELS[p.currentPosition]||p.currentPosition}</div></div>
+        <div class="dp-metric"><div class="dp-metric-lbl">권장 체위</div><div class="dp-metric-val ok" id="detail-recommended-${p.id}" style="font-size:13px;font-family:var(--font)">${PLABELS[p.recommendedPosition]||p.recommendedPosition}</div></div>
+        <div class="dp-metric"><div class="dp-metric-lbl">경과 시간</div><div class="dp-metric-val ${isOver?'danger':''}" id="detail-elapsed-${p.id}">${elapsed2str(p.elapsedMinutes)}</div><div class="dp-metric-sub">${isOver?'⚠ 초과':'정상 범위'}</div></div>
+        <div class="dp-metric"><div class="dp-metric-lbl">위험 점수</div><div class="dp-metric-val ${scoreCol}" id="detail-risk-score-${p.id}">${Math.round(p.riskScore)}</div><div class="dp-metric-sub">${p.riskScore>=70?'위험':p.riskScore>=40?'주의':'안전'}</div></div>
       </div>
+      ${videoBlock}
       ${alertBox}
     </div>
     <div class="dp-two-col">
@@ -313,7 +376,7 @@ function openDetail(id){
       <div class="dp-section"><div class="dp-sec-title">요인별 위험도</div>${factorRows}<div class="factor-legend"><span><b style="color:#2D6A2D">■</b> 0–39 안전</span><span><b style="color:#9A5E00">■</b> 40–69 주의</span><span><b style="color:#C0392B">■</b> 70+ 위험</span></div></div>
     </div>
     <div class="dp-section"><div class="dp-sec-title">신체 부위별 압력 위험도</div><div class="body-map-row"><div class="body-map-svg">${buildBodySVG(p.spotRisks||{})}</div><div class="body-map-legend"><div class="bleg-title">위험도 범례</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(192,57,43,.4);border:1.5px solid #C0392B"></div>고위험</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(154,94,0,.35);border:1.5px solid #9A5E00"></div>주의</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(45,106,45,.3);border:1.5px solid #2D6A2D"></div>안전</div><div class="bleg-spots-title">주요 고위험</div>${spotListHtml}</div></div></div>
-    <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인</div><div class="tl-wrap"><div class="tl-row">${tlCells}</div></div></div>`;
+    <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인 <span style="font-size:10px;color:var(--txt-tertiary);font-weight:500">· 10초 대표 체위</span></div><div class="tl-wrap"><div class="tl-row" id="summary-timeline-${p.id}">${tlCells}</div></div></div>`;
 
   requestAnimationFrame(()=>{
     const ctx=document.getElementById('radar-chart');if(!ctx)return;
@@ -329,12 +392,73 @@ function closeDetail(){
   document.getElementById('list-view').style.display='block';
 }
 
+
+function applyRealtimePosture(data){
+  const p=patients.find(x=>x.id===data.id);
+  if(!p)return;
+
+  p.currentPosition=data.currentPosition;
+  p.postureConfidence=data.postureConfidence;
+  if(data.videoUrl)p.videoUrl=data.videoUrl;
+
+  const label=PLABELS[data.currentPosition]||data.currentPosition;
+
+  const listCurrent=document.getElementById(`list-current-${data.id}`);
+  if(listCurrent)listCurrent.textContent=label;
+
+  const detailCurrent=document.getElementById(`detail-current-${data.id}`);
+  if(detailCurrent)detailCurrent.textContent=label;
+
+  const videoPosture=document.getElementById(`video-posture-${data.id}`);
+  if(videoPosture)videoPosture.textContent=`YOLO 분류 · ${label}`;
+
+  const videoConfidence=document.getElementById(`video-confidence-${data.id}`);
+  if(videoConfidence)videoConfidence.textContent=`분류 신뢰도: ${confStr(data.postureConfidence)}`;
+}
+
+async function fetchRealtimePostures(){
+  const targets=patients.filter(p=>p.videoFile||p.videoUrl);
+  if(targets.length===0)return;
+
+  for(const p of targets){
+    try{
+      let url=`/api/posture/${encodeURIComponent(p.id)}`;
+
+      // 상세 페이지에서 실제 영상이 재생 중이면,
+      // 화면에 보이는 영상 시간(video.currentTime)을 백엔드로 전달한다.
+      // 그러면 YOLO가 실제 현재 프레임 기준으로 체위를 분류한다.
+      const videoEl=document.getElementById(`patient-video-${p.id}`);
+      if(videoEl && !Number.isNaN(videoEl.currentTime)){
+        url += `?t=${encodeURIComponent(videoEl.currentTime)}`;
+      }
+
+      const res=await fetch(url);
+      if(!res.ok)continue;
+      const data=await res.json();
+      applyRealtimePosture(data);
+    }catch(e){
+      console.warn('실시간 체위 분류 실패:',p.id,e);
+    }
+  }
+}
+
 async function fetchAndRender(){
   const dot=document.getElementById('refresh-dot');dot.classList.add('loading');
   try{
     const res=await fetch('/api/patients');const data=await res.json();
     patients=data;renderList(patients);
-    if(currentDetailId)openDetail(currentDetailId);
+
+    if(currentDetailId){
+      const currentPatient=patients.find(x=>x.id===currentDetailId);
+      updateDetailSummaryFromPatient(currentPatient);
+    }
+
+    // 상세 페이지가 열려 있을 때 openDetail()을 다시 호출하면
+    // video 태그가 새로 생성되어 영상이 처음부터 재생된다.
+    // 따라서 10초 갱신 시에는 상세 페이지를 다시 그리지 않고,
+    // 기존 video 요소는 그대로 유지한다.
+    // 목록으로 돌아갔다가 다시 상세로 들어가면 최신 patients 데이터로 다시 렌더링된다.
+
     document.getElementById('refresh-time').textContent=nowStr()+' 갱신';
     dot.classList.remove('loading');
   }catch(e){
@@ -345,6 +469,7 @@ async function fetchAndRender(){
 }
 fetchAndRender();
 setInterval(fetchAndRender,10000);
+setInterval(fetchRealtimePostures,1000);
 </script>
 </body>
 </html>
