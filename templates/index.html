@@ -155,7 +155,60 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt-primary);min-h
 .video-caption{padding:8px 10px;font-size:11px;color:var(--txt-secondary);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;line-height:1.4}
 .video-empty{margin-top:12px;padding:12px;border:1px dashed var(--border2);border-radius:var(--r-md);font-size:11px;color:var(--txt-tertiary);background:var(--surface2)}
 
-@media(max-width:480px){.dp-metrics{grid-template-columns:repeat(2,1fr)}.dp-two-col{grid-template-columns:1fr}.posture-flow{display:none}.stat-val{font-size:22px}}
+
+/* 상세 탭 */
+.detail-tabs{display:flex;gap:6px;margin:0 0 12px;padding:4px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.detail-tab-btn{flex:1;border:0;background:transparent;color:var(--txt-secondary);font-family:var(--font);font-size:12px;font-weight:700;border-radius:var(--r-md);padding:9px 10px;cursor:pointer;transition:background .12s,color .12s,box-shadow .12s}
+.detail-tab-btn:hover{color:var(--txt-primary)}
+.detail-tab-btn.active{background:var(--surface);color:var(--txt-primary);box-shadow:var(--sh-sm)}
+.detail-tab-panel{display:none}
+.detail-tab-panel.active{display:block;animation:slideDown .15s ease}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* YOLO 체위 분류 탭 */
+.yolo-panel{font-family:var(--font);padding:0}
+.yolo-sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:12px;box-shadow:var(--sh-sm)}
+.yolo-sec-title{font-size:11px;font-weight:700;color:var(--txt-secondary);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+.yolo-video-wrap{background:#000;border-radius:var(--r-md);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:14px;border:1px solid var(--border)}
+.yolo-video-placeholder{color:#fff;font-size:13px;opacity:.65;text-align:center;padding:18px;line-height:1.5}
+.yolo-video{width:100%;height:100%;display:block;background:#000;object-fit:contain}
+.yolo-overlay-badge{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.68);border-radius:20px;padding:5px 10px;backdrop-filter:blur(4px)}
+.yolo-overlay-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.yolo-overlay-text{font-size:11px;font-weight:700;color:#fff}
+.yolo-overlay-conf{font-size:10px;color:rgba(255,255,255,.72)}
+.yolo-metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.yolo-metric-card{background:var(--surface2);border-radius:var(--r-md);padding:10px 12px}
+.yolo-metric-lbl{font-size:11px;color:var(--txt-secondary);margin-bottom:3px}
+.yolo-metric-val{font-size:16px;font-weight:700;color:var(--txt-primary);font-family:var(--mono)}
+.yolo-metric-sub{font-size:10px;color:var(--txt-tertiary);margin-top:1px}
+.yolo-cls-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.yolo-cls-label{font-size:12px;font-weight:600;color:var(--txt-primary);width:70px;flex-shrink:0;line-height:1.2}
+.yolo-cls-track{flex:1;height:22px;background:var(--surface2);border-radius:var(--r-md);overflow:hidden;position:relative;border:1px solid var(--border)}
+.yolo-cls-fill{height:100%;border-radius:var(--r-md);transition:width .5s ease;display:flex;align-items:center;padding-left:8px;min-width:2px}
+.yolo-cls-fill-label{font-size:11px;font-weight:700;white-space:nowrap}
+.yolo-cls-pct{font-size:12px;font-weight:700;width:42px;text-align:right;flex-shrink:0;font-family:var(--mono)}
+.yolo-badge-active{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;white-space:nowrap}
+.yolo-conf-gauge-row{display:flex;align-items:center;gap:10px;margin:12px 0 2px}
+.yolo-conf-gauge-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.yolo-conf-gauge-fill{height:100%;border-radius:3px;transition:width .5s ease;background:var(--green)}
+.yolo-conf-label{font-size:11px;color:var(--txt-secondary);width:70px;flex-shrink:0}
+.yolo-conf-val{font-size:12px;font-weight:700;color:var(--txt-primary);width:38px;text-align:right;flex-shrink:0;font-family:var(--mono)}
+.yolo-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.yolo-hist-row{display:flex;gap:4px;align-items:flex-end;height:48px;margin-bottom:6px}
+.yolo-hist-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .3s ease}
+.yolo-hist-labels{display:flex;gap:4px}
+.yolo-hist-lbl{flex:1;font-size:9px;color:var(--txt-tertiary);text-align:center;overflow:hidden;font-family:var(--mono)}
+.yolo-legend-row{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap}
+.yolo-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt-secondary)}
+.yolo-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.yolo-slider-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;color:var(--txt-secondary)}
+.yolo-slider-row input{flex:1;accent-color:var(--blue)}
+.yolo-sim-btn{font-size:11px;font-weight:700;padding:7px 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--surface);color:var(--txt-primary);cursor:pointer;width:100%;margin-top:4px;transition:background .12s,border-color .12s}
+.yolo-sim-btn:hover{background:var(--surface2);border-color:var(--txt-tertiary)}
+.yolo-empty-note{font-size:11px;color:var(--txt-tertiary);line-height:1.5;margin-top:8px}
+
+@media(max-width:480px){.dp-metrics{grid-template-columns:repeat(2,1fr)}.dp-two-col,.yolo-two-col{grid-template-columns:1fr}.yolo-metrics-grid{grid-template-columns:1fr}.posture-flow{display:none}.stat-val{font-size:22px}}
 </style>
 </head>
 <body>
@@ -203,6 +256,13 @@ const PCOLORS={Left:['#E6F1FB','#B5D4F4','#85B7EB','#378ADD','#185FA5'],Right:['
 const BODY_SPOTS={occiput:{label:'후두부',cx:97,cy:28,r:14},scapula_l:{label:'좌견갑골',cx:78,cy:82,r:12},scapula_r:{label:'우견갑골',cx:116,cy:82,r:12},sacrum:{label:'천골/미골',cx:97,cy:178,r:16},heel_l:{label:'좌발뒤꿈치',cx:81,cy:330,r:10},heel_r:{label:'우발뒤꿈치',cx:113,cy:330,r:10}};
 const FNAMES={pressureDuration:'압력 지속',moisture:'습기',activity:'활동',mobility:'이동성',nutrition:'영양',frictionShear:'마찰/전단력',supportSurface:'지지표면'};
 
+const YOLO_POSTURES=[
+  {key:'Left',label:'좌측위',color:'#378ADD',fill:'rgba(55,138,221,.18)',textColor:'#185FA5'},
+  {key:'Right',label:'우측위',color:'#639922',fill:'rgba(99,153,34,.18)',textColor:'#3B6D11'},
+  {key:'Supine',label:'앙와위',color:'#BA7517',fill:'rgba(186,117,23,.18)',textColor:'#854F0B'},
+];
+const YOLO_PANEL_STATE={};
+
 let patients=[],radarChart=null,currentDetailId=null,openPanels=new Set();
 
 function acol(s){return s==='immediate'?'red':s==='caution'?'amber':'green';}
@@ -219,6 +279,192 @@ function elapsed2str(min){return min>=60?`${Math.floor(min/60)}h ${min%60}m`:`${
 function nowStr(){const d=new Date();return`${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;}
 function getVideoUrl(p){return p.videoUrl || (p.videoFile ? `/static/videos/${p.videoFile}` : '');}
 function confStr(v){return v===undefined||v===null||v===''?'—':`${Math.round(Number(v)*100)}%`;}
+
+function clampPct(v){return Math.max(0,Math.min(100,Math.round(Number(v)||0)));}
+function yoloMeta(key){return YOLO_POSTURES.find(x=>x.key===key)||YOLO_POSTURES[2];}
+function topYoloClass(probs){
+  const entries=YOLO_POSTURES.map(p=>[p.key,Number(probs&&probs[p.key])||0]);
+  return entries.sort((a,b)=>b[1]-a[1])[0];
+}
+function normalizeYoloProbabilities(raw){
+  if(!raw||typeof raw!=='object')return null;
+  const out={Left:0,Right:0,Supine:0};
+  let has=false;
+  YOLO_POSTURES.forEach(p=>{
+    let v=Number(raw[p.key]);
+    if(Number.isFinite(v)){
+      if(v>=0&&v<=1)v*=100;
+      out[p.key]=Math.max(0,v);has=true;
+    }
+  });
+  if(!has)return null;
+  const total=Object.values(out).reduce((a,b)=>a+b,0);
+  if(total<=0)return null;
+  YOLO_POSTURES.forEach(p=>{out[p.key]=clampPct(out[p.key]/total*100);});
+  const diff=100-Object.values(out).reduce((a,b)=>a+b,0);
+  if(diff!==0){const [topKey]=topYoloClass(out);out[topKey]=clampPct(out[topKey]+diff);}
+  return out;
+}
+function deriveYoloProbabilities(topKey,confidence){
+  const probs={Left:0,Right:0,Supine:0};
+  const safeTop=YOLO_POSTURES.some(p=>p.key===topKey)?topKey:'Supine';
+  let conf=Number(confidence);
+  const known=Number.isFinite(conf)&&conf>0;
+  if(known&&conf<=1)conf*=100;
+  const topPct=known?clampPct(conf):100;
+  const rest=Math.max(0,100-topPct);
+  probs[safeTop]=topPct;
+  YOLO_POSTURES.filter(p=>p.key!==safeTop).forEach(p=>{probs[p.key]=Math.round(rest/2);});
+  const diff=100-Object.values(probs).reduce((a,b)=>a+b,0);
+  if(diff!==0)probs[safeTop]=clampPct(probs[safeTop]+diff);
+  return{probs,confidenceKnown:known};
+}
+function patientYoloSnapshot(p){
+  const normalized=normalizeYoloProbabilities(p&&p.postureProbabilities);
+  if(normalized)return{probs:normalized,confidenceKnown:true};
+  return deriveYoloProbabilities(p&&p.currentPosition, p&&p.postureConfidence);
+}
+function ensureYoloState(p){
+  if(!p)return null;
+  const snap=patientYoloSnapshot(p);
+  if(!YOLO_PANEL_STATE[p.id]){
+    let history=(p.postureSummaryTimeline||p.timeline||[]).map(x=>x.p).filter(Boolean).slice(-10);
+    if(history.length===0&&Array.isArray(p.heatmap))history=p.heatmap.map(x=>x.p).filter(Boolean).slice(-10);
+    while(history.length<10)history.unshift(p.currentPosition||'Supine');
+    YOLO_PANEL_STATE[p.id]={probs:snap.probs,confidenceKnown:snap.confidenceKnown,history};
+  }else{
+    YOLO_PANEL_STATE[p.id].probs=snap.probs;
+    YOLO_PANEL_STATE[p.id].confidenceKnown=snap.confidenceKnown;
+    if(!Array.isArray(YOLO_PANEL_STATE[p.id].history)||YOLO_PANEL_STATE[p.id].history.length===0){
+      YOLO_PANEL_STATE[p.id].history=Array(10).fill(p.currentPosition||'Supine');
+    }
+  }
+  return YOLO_PANEL_STATE[p.id];
+}
+function buildYoloPanel(p){
+  const videoUrl=getVideoUrl(p);
+  const videoHtml=videoUrl
+    ?`<video class="yolo-video" id="patient-video-${p.id}" src="${videoUrl}" controls autoplay muted loop playsinline preload="metadata"></video>`
+    :`<div class="yolo-video-placeholder">연결된 환자 영상이 없습니다.<br>patients.json에 <strong>videoFile</strong> 또는 백엔드 응답에 <strong>videoUrl</strong>을 추가하세요.</div>`;
+  return`
+    <div class="yolo-panel">
+      <h2 class="sr-only">딥러닝 체위 분류 출력 시각화 패널 — YOLO 모델의 실시간 분류 결과를 보여줍니다.</h2>
+      <div class="yolo-sec">
+        <div class="yolo-sec-title">실제 환자 체위 영상</div>
+        <div class="yolo-video-wrap">
+          ${videoHtml}
+          <div class="yolo-overlay-badge">
+            <div class="yolo-overlay-dot"></div>
+            <span class="yolo-overlay-text" id="yolo-overlay-label-${p.id}">${PLABELS[p.currentPosition]||p.currentPosition}</span>
+            <span class="yolo-overlay-conf" id="yolo-overlay-conf-${p.id}">${confStr(p.postureConfidence)}</span>
+          </div>
+        </div>
+        <div class="yolo-metrics-grid">
+          <div class="yolo-metric-card"><div class="yolo-metric-lbl">현재 분류</div><div class="yolo-metric-val" id="yolo-m-posture-${p.id}" style="font-size:14px;font-family:var(--font)">—</div><div class="yolo-metric-sub">YOLO-cls</div></div>
+          <div class="yolo-metric-card"><div class="yolo-metric-lbl">분류 신뢰도</div><div class="yolo-metric-val" id="yolo-m-conf-${p.id}">—</div><div class="yolo-metric-sub" id="yolo-m-conf-sub-${p.id}">수신 대기</div></div>
+          <div class="yolo-metric-card"><div class="yolo-metric-lbl">10초 대표</div><div class="yolo-metric-val" id="yolo-m-majority-${p.id}" style="font-size:14px;font-family:var(--font)">—</div><div class="yolo-metric-sub" id="yolo-m-votes-${p.id}">0 / 10 votes</div></div>
+        </div>
+        <div class="yolo-sec-title" style="margin-bottom:10px">클래스별 softmax 확률</div>
+        <div id="yolo-cls-rows-${p.id}"></div>
+        <div class="yolo-conf-gauge-row">
+          <span class="yolo-conf-label">분류 신뢰도</span>
+          <div class="yolo-conf-gauge-track"><div class="yolo-conf-gauge-fill" id="yolo-conf-fill-${p.id}" style="width:0%"></div></div>
+          <span class="yolo-conf-val" id="yolo-conf-val-txt-${p.id}">—</span>
+        </div>
+        <div class="yolo-empty-note">실제 재생 프레임의 YOLO 결과가 1초마다 갱신되고, 최근 10초 대표 체위는 수집된 vote 기준으로 표시됩니다.</div>
+      </div>
+      <div class="yolo-two-col">
+        <div class="yolo-sec">
+          <div class="yolo-sec-title">최근 10초 분류 히스토리</div>
+          <div class="yolo-hist-row" id="yolo-hist-bars-${p.id}"></div>
+          <div class="yolo-hist-labels" id="yolo-hist-labels-${p.id}"></div>
+          <div class="yolo-legend-row">
+            <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#378ADD"></div>좌측위</div>
+            <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#639922"></div>우측위</div>
+            <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#BA7517"></div>앙와위</div>
+          </div>
+        </div>
+        <div class="yolo-sec">
+          <div class="yolo-sec-title">시뮬레이터</div>
+          ${YOLO_POSTURES.map(pos=>`<div class="yolo-slider-row"><span style="width:48px">${pos.key}</span><input type="range" id="yolo-sl-${pos.key.toLowerCase()}-${p.id}" min="0" max="100" value="0" step="1"><span id="yolo-sl-${pos.key.toLowerCase()}-val-${p.id}" style="width:34px;text-align:right;font-family:var(--mono)">0%</span></div>`).join('')}
+          <button class="yolo-sim-btn" id="yolo-apply-btn-${p.id}" type="button">적용 →</button>
+        </div>
+      </div>
+    </div>`;
+}
+function renderYoloClsRows(id){
+  const state=YOLO_PANEL_STATE[id];const el=document.getElementById(`yolo-cls-rows-${id}`);if(!state||!el)return;
+  const [topKey]=topYoloClass(state.probs);
+  el.innerHTML=YOLO_POSTURES.map(p=>{
+    const v=clampPct(state.probs[p.key]);const isTop=p.key===topKey;const barW=Math.max(v,2);const showLabel=v>12;
+    return`<div class="yolo-cls-row${isTop?' active':''}">
+      <span class="yolo-cls-label" style="${isTop?'font-weight:700':''}">${p.label}${isTop?`<span class="yolo-badge-active" style="background:${p.fill};color:${p.textColor}">분류</span>`:''}</span>
+      <div class="yolo-cls-track"><div class="yolo-cls-fill" style="width:${barW}%;background:${p.fill};border-right:2px solid ${p.color}">${showLabel?`<span class="yolo-cls-fill-label" style="color:${p.textColor}">${p.label}</span>`:''}</div></div>
+      <span class="yolo-cls-pct" style="color:${isTop?p.textColor:'var(--txt-secondary)'}">${state.confidenceKnown?Math.round(v)+'%':'—'}</span>
+    </div>`;
+  }).join('');
+}
+function renderYoloMetrics(id){
+  const state=YOLO_PANEL_STATE[id];if(!state)return;
+  const [topKey,topVal]=topYoloClass(state.probs);const meta=yoloMeta(topKey);
+  const confTxt=state.confidenceKnown?Math.round(topVal)+'%':'—';
+  const set=(suffix,value)=>{const el=document.getElementById(`yolo-${suffix}-${id}`);if(el)el.textContent=value;};
+  set('m-posture',meta.label);set('m-conf',confTxt);set('conf-val-txt',confTxt);set('overlay-label',meta.label);set('overlay-conf',confTxt);
+  const postureEl=document.getElementById(`yolo-m-posture-${id}`);if(postureEl)postureEl.style.color=meta.textColor;
+  const confSub=document.getElementById(`yolo-m-conf-sub-${id}`);if(confSub)confSub.textContent=state.confidenceKnown?(topVal>=80?'높음':topVal>=60?'보통':'낮음'):'수신 대기';
+  const fill=document.getElementById(`yolo-conf-fill-${id}`);if(fill){fill.style.width=state.confidenceKnown?Math.round(topVal)+'%':'0%';fill.style.background=topVal>=70?meta.color:'#9A5E00';}
+  const history=state.history||[];const counts={Left:0,Right:0,Supine:0};history.slice(-10).forEach(h=>{if(counts[h]!==undefined)counts[h]++;});
+  const majority=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||topKey;const majMeta=yoloMeta(majority);
+  set('m-majority',majMeta.label);set('m-votes',`${counts[majority]||0} / ${Math.min(history.length,10)} votes`);
+  const majEl=document.getElementById(`yolo-m-majority-${id}`);if(majEl)majEl.style.color=majMeta.textColor;
+}
+function renderYoloHist(id){
+  const state=YOLO_PANEL_STATE[id];const bars=document.getElementById(`yolo-hist-bars-${id}`);const labels=document.getElementById(`yolo-hist-labels-${id}`);if(!state||!bars||!labels)return;
+  const history=(state.history||[]).slice(-10);const color={Left:'#378ADD',Right:'#639922',Supine:'#BA7517'};
+  bars.innerHTML=history.map((h,i)=>{const isLast=i===history.length-1;return`<div class="yolo-hist-bar" style="background:${color[h]||'#9B9A93'};height:${isLast?48:28}px;opacity:${0.4+0.06*i};outline:${isLast?'2px solid '+(color[h]||'#9B9A93'):'none'};outline-offset:1px"></div>`;}).join('');
+  labels.innerHTML=history.map((_,i)=>{const sec=(i-history.length+1);return`<div class="yolo-hist-lbl">${sec===0?'지금':sec+'s'}</div>`;}).join('');
+}
+function syncYoloSliders(id){
+  const state=YOLO_PANEL_STATE[id];if(!state)return;
+  YOLO_POSTURES.forEach(p=>{
+    const v=clampPct(state.probs[p.key]);
+    const slider=document.getElementById(`yolo-sl-${p.key.toLowerCase()}-${id}`);const val=document.getElementById(`yolo-sl-${p.key.toLowerCase()}-val-${id}`);
+    if(slider)slider.value=v;if(val)val.textContent=v+'%';
+  });
+}
+function renderYoloPanel(id){renderYoloClsRows(id);renderYoloMetrics(id);renderYoloHist(id);syncYoloSliders(id);}
+function applyYoloSlider(id){
+  if(!YOLO_PANEL_STATE[id])return;
+  const raw={};YOLO_POSTURES.forEach(p=>{const el=document.getElementById(`yolo-sl-${p.key.toLowerCase()}-${id}`);raw[p.key]=el?Number(el.value):0;});
+  YOLO_PANEL_STATE[id].probs=normalizeYoloProbabilities(raw)||raw;
+  YOLO_PANEL_STATE[id].confidenceKnown=true;
+  const [topKey]=topYoloClass(YOLO_PANEL_STATE[id].probs);
+  pushYoloHistory(id,topKey,false);renderYoloPanel(id);
+}
+function pushYoloHistory(id,posture,rerender=true){
+  if(!posture)return;
+  if(!YOLO_PANEL_STATE[id])YOLO_PANEL_STATE[id]={probs:deriveYoloProbabilities(posture,0).probs,confidenceKnown:false,history:[]};
+  YOLO_PANEL_STATE[id].history.push(posture);
+  if(YOLO_PANEL_STATE[id].history.length>10)YOLO_PANEL_STATE[id].history=YOLO_PANEL_STATE[id].history.slice(-10);
+  if(rerender)renderYoloPanel(id);
+}
+function initYoloPanel(p){
+  ensureYoloState(p);renderYoloPanel(p.id);
+  YOLO_POSTURES.forEach(pos=>{
+    const slider=document.getElementById(`yolo-sl-${pos.key.toLowerCase()}-${p.id}`);
+    const val=document.getElementById(`yolo-sl-${pos.key.toLowerCase()}-val-${p.id}`);
+    if(slider&&val)slider.addEventListener('input',function(){val.textContent=this.value+'%';});
+  });
+  const btn=document.getElementById(`yolo-apply-btn-${p.id}`);if(btn)btn.addEventListener('click',()=>applyYoloSlider(p.id));
+}
+function syncYoloPanelFromPatient(p){if(!p)return;ensureYoloState(p);renderYoloPanel(p.id);}
+function switchDetailTab(id,tab){
+  ['risk','yolo'].forEach(name=>{
+    const panel=document.getElementById(`${name}-tab-${id}`);const btn=document.getElementById(`${name}-tab-btn-${id}`);const active=name===tab;
+    if(panel)panel.classList.toggle('active',active);
+    if(btn){btn.classList.toggle('active',active);btn.setAttribute('aria-selected',active?'true':'false');}
+  });
+}
 
 function buildBodySVG(sr){
   const spots=Object.entries(BODY_SPOTS).map(([k,s])=>{const v=sr[k]||0,c=spotColor(v);return`<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5"/>`;}).join('');
@@ -262,6 +508,8 @@ function updateDetailSummaryFromPatient(p){
   if(scoreEl){
     scoreEl.textContent=Math.round(p.riskScore);
   }
+
+  syncYoloPanelFromPatient(p);
 }
 
 function toggleInline(id){
@@ -340,21 +588,6 @@ function openDetail(id){
     ?`<div class="alert-box danger"><span class="alert-icon">🚨</span><div><strong>즉시 조치 필요</strong><br>장시간 ${PLABELS[p.currentPosition]} 유지로 압력 및 피부 손상 위험이 높습니다.<br><strong>권장: ${p.recommendedAction}</strong></div></div>`
     :p.status==='caution'
     ?`<div class="alert-box warn"><span class="alert-icon">⚠️</span><div><strong>주의 관찰 필요</strong><br>${p.recommendedAction}</div></div>`:'';
-  const videoUrl=getVideoUrl(p);
-  const videoBlock=videoUrl
-    ?`<div class="patient-video-wrap">
-        <div class="patient-video-head">
-          <span>실제 환자 체위 영상</span>
-          <span class="patient-video-status" id="video-posture-${p.id}">YOLO 분류 · ${PLABELS[p.currentPosition]||p.currentPosition}</span>
-        </div>
-        <video class="patient-video" id="patient-video-${p.id}" src="${videoUrl}" controls autoplay muted loop playsinline preload="metadata"></video>
-        <div class="video-caption">
-          <span>환자 ID: ${p.id}</span>
-          <span id="video-confidence-${p.id}">분류 신뢰도: ${confStr(p.postureConfidence)}</span>
-        </div>
-      </div>`
-    :`<div class="video-empty">연결된 환자 영상이 없습니다. patients.json에 <strong>videoFile</strong> 또는 백엔드 응답에 <strong>videoUrl</strong>을 추가하세요.</div>`;
-
   document.getElementById('dp-content').innerHTML=`
     <div class="dp-header">
       <div class="dp-hrow">
@@ -368,15 +601,25 @@ function openDetail(id){
         <div class="dp-metric"><div class="dp-metric-lbl">경과 시간</div><div class="dp-metric-val ${isOver?'danger':''}" id="detail-elapsed-${p.id}">${elapsed2str(p.elapsedMinutes)}</div><div class="dp-metric-sub">${isOver?'⚠ 초과':'정상 범위'}</div></div>
         <div class="dp-metric"><div class="dp-metric-lbl">위험 점수</div><div class="dp-metric-val ${scoreCol}" id="detail-risk-score-${p.id}">${Math.round(p.riskScore)}</div><div class="dp-metric-sub">${p.riskScore>=70?'위험':p.riskScore>=40?'주의':'안전'}</div></div>
       </div>
-      ${videoBlock}
       ${alertBox}
     </div>
-    <div class="dp-two-col">
-      <div class="dp-section"><div class="dp-sec-title">위험 요인 레이더</div><div style="position:relative;height:180px"><canvas id="radar-chart"></canvas></div></div>
-      <div class="dp-section"><div class="dp-sec-title">요인별 위험도</div>${factorRows}<div class="factor-legend"><span><b style="color:#2D6A2D">■</b> 0–39 안전</span><span><b style="color:#9A5E00">■</b> 40–69 주의</span><span><b style="color:#C0392B">■</b> 70+ 위험</span></div></div>
+    <div class="detail-tabs" role="tablist" aria-label="환자 상세 정보 탭">
+      <button class="detail-tab-btn active" id="risk-tab-btn-${p.id}" type="button" role="tab" aria-selected="true" aria-controls="risk-tab-${p.id}" onclick="switchDetailTab('${p.id}','risk')">위험 분석</button>
+      <button class="detail-tab-btn" id="yolo-tab-btn-${p.id}" type="button" role="tab" aria-selected="false" aria-controls="yolo-tab-${p.id}" onclick="switchDetailTab('${p.id}','yolo')">YOLO 체위 분류</button>
     </div>
-    <div class="dp-section"><div class="dp-sec-title">신체 부위별 압력 위험도</div><div class="body-map-row"><div class="body-map-svg">${buildBodySVG(p.spotRisks||{})}</div><div class="body-map-legend"><div class="bleg-title">위험도 범례</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(192,57,43,.4);border:1.5px solid #C0392B"></div>고위험</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(154,94,0,.35);border:1.5px solid #9A5E00"></div>주의</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(45,106,45,.3);border:1.5px solid #2D6A2D"></div>안전</div><div class="bleg-spots-title">주요 고위험</div>${spotListHtml}</div></div></div>
-    <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인 <span style="font-size:10px;color:var(--txt-tertiary);font-weight:500">· 10초 대표 체위</span></div><div class="tl-wrap"><div class="tl-row" id="summary-timeline-${p.id}">${tlCells}</div></div></div>`;
+    <section class="detail-tab-panel active" id="risk-tab-${p.id}" role="tabpanel" aria-labelledby="risk-tab-btn-${p.id}">
+      <div class="dp-two-col">
+        <div class="dp-section"><div class="dp-sec-title">위험 요인 레이더</div><div style="position:relative;height:180px"><canvas id="radar-chart"></canvas></div></div>
+        <div class="dp-section"><div class="dp-sec-title">요인별 위험도</div>${factorRows}<div class="factor-legend"><span><b style="color:#2D6A2D">■</b> 0–39 안전</span><span><b style="color:#9A5E00">■</b> 40–69 주의</span><span><b style="color:#C0392B">■</b> 70+ 위험</span></div></div>
+      </div>
+      <div class="dp-section"><div class="dp-sec-title">신체 부위별 압력 위험도</div><div class="body-map-row"><div class="body-map-svg">${buildBodySVG(p.spotRisks||{})}</div><div class="body-map-legend"><div class="bleg-title">위험도 범례</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(192,57,43,.4);border:1.5px solid #C0392B"></div>고위험</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(154,94,0,.35);border:1.5px solid #9A5E00"></div>주의</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(45,106,45,.3);border:1.5px solid #2D6A2D"></div>안전</div><div class="bleg-spots-title">주요 고위험</div>${spotListHtml}</div></div></div>
+      <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인 <span style="font-size:10px;color:var(--txt-tertiary);font-weight:500">· 10초 대표 체위</span></div><div class="tl-wrap"><div class="tl-row" id="summary-timeline-${p.id}">${tlCells}</div></div></div>
+    </section>
+    <section class="detail-tab-panel" id="yolo-tab-${p.id}" role="tabpanel" aria-labelledby="yolo-tab-btn-${p.id}">
+      ${buildYoloPanel(p)}
+    </section>`;
+
+  initYoloPanel(p);
 
   requestAnimationFrame(()=>{
     const ctx=document.getElementById('radar-chart');if(!ctx)return;
@@ -399,7 +642,12 @@ function applyRealtimePosture(data){
 
   p.currentPosition=data.currentPosition;
   p.postureConfidence=data.postureConfidence;
+  if(data.postureProbabilities)p.postureProbabilities=data.postureProbabilities;
+  if(data.postureVoteCount10s!==undefined)p.postureVoteCount10s=data.postureVoteCount10s;
   if(data.videoUrl)p.videoUrl=data.videoUrl;
+
+  ensureYoloState(p);
+  pushYoloHistory(data.id,data.currentPosition,false);
 
   const label=PLABELS[data.currentPosition]||data.currentPosition;
 
@@ -414,6 +662,8 @@ function applyRealtimePosture(data){
 
   const videoConfidence=document.getElementById(`video-confidence-${data.id}`);
   if(videoConfidence)videoConfidence.textContent=`분류 신뢰도: ${confStr(data.postureConfidence)}`;
+
+  renderYoloPanel(data.id);
 }
 
 async function fetchRealtimePostures(){

@@ -31,6 +31,45 @@ CLASS_NAME_MAP = {
     "supine": "Supine", "Supine": "Supine", "앙와위": "Supine",
 }
 
+POSTURE_KEYS = ["Left", "Right", "Supine"]
+
+
+def empty_posture_probabilities():
+    return {key: 0.0 for key in POSTURE_KEYS}
+
+
+def extract_posture_probabilities(result):
+    """YOLO-cls result.probs를 프론트에서 쓰기 쉬운 체위별 확률 dict로 변환한다."""
+    probabilities = empty_posture_probabilities()
+    probs_obj = getattr(result, "probs", None)
+    probs_data = getattr(probs_obj, "data", None)
+
+    if probs_data is None:
+        return probabilities
+
+    if hasattr(probs_data, "detach"):
+        raw_scores = probs_data.detach().cpu().tolist()
+    elif hasattr(probs_data, "cpu"):
+        raw_scores = probs_data.cpu().tolist()
+    else:
+        raw_scores = list(probs_data)
+
+    for class_index, score in enumerate(raw_scores):
+        if isinstance(result.names, dict):
+            raw_class_name = result.names.get(class_index, result.names.get(str(class_index), str(class_index)))
+        else:
+            raw_class_name = result.names[class_index]
+
+        posture = CLASS_NAME_MAP.get(raw_class_name, raw_class_name)
+        if posture in probabilities:
+            probabilities[posture] = max(probabilities[posture], float(score))
+
+    total = sum(probabilities.values())
+    if total > 0:
+        probabilities = {key: round(value / total, 3) for key, value in probabilities.items()}
+
+    return probabilities
+
 
 def load_initial_data():
     global GLOBAL_PATIENTS
@@ -70,7 +109,7 @@ def extract_frame_by_time(video_path, target_sec):
 def classify_posture_from_video(video_path, target_sec=None):
     duration = get_video_duration_sec(video_path)
     if duration <= 0:
-        return None, 0.0
+        return None, 0.0, empty_posture_probabilities()
 
     if target_sec is None:
         elapsed_server_time = time.time() - SERVER_START_TIME
@@ -80,11 +119,11 @@ def classify_posture_from_video(video_path, target_sec=None):
 
     frame = extract_frame_by_time(video_path, current_video_sec)
     if frame is None:
-        return None, 0.0
+        return None, 0.0, empty_posture_probabilities()
 
     results = model.predict(frame, verbose=False)
     if not results:
-        return None, 0.0
+        return None, 0.0, empty_posture_probabilities()
 
     result = results[0]
 
@@ -92,35 +131,39 @@ def classify_posture_from_video(video_path, target_sec=None):
     # detection 모델이나 잘못된 가중치에서는 probs가 None일 수 있으므로 서버가 죽지 않게 방어한다.
     if getattr(result, "probs", None) is None:
         print("⚠️ 현재 모델 출력에 probs가 없습니다. 체위 분류용 YOLO-cls 모델인지 확인하세요.")
-        return None, 0.0
+        return None, 0.0, empty_posture_probabilities()
 
     class_index = int(result.probs.top1)
     confidence = float(result.probs.top1conf)
-    raw_class_name = result.names[class_index]
+    if isinstance(result.names, dict):
+        raw_class_name = result.names.get(class_index, result.names.get(str(class_index), str(class_index)))
+    else:
+        raw_class_name = result.names[class_index]
     posture = CLASS_NAME_MAP.get(raw_class_name, raw_class_name)
-    return posture, confidence
+    probabilities = extract_posture_probabilities(result)
+    return posture, confidence, probabilities
 
 
 def classify_single_patient_video(p, target_sec=None):
     video_file = p.get("videoFile")
     if not video_file:
-        return None, 0.0, None
+        return None, 0.0, None, empty_posture_probabilities()
 
     video_path = os.path.join(VIDEO_DIR, video_file)
     if not os.path.exists(video_path):
         print(f"⚠️ 영상 없음: {video_path}")
-        return None, 0.0, None
+        return None, 0.0, None, empty_posture_probabilities()
 
-    posture, confidence = classify_posture_from_video(video_path, target_sec=target_sec)
-    if posture not in ["Left", "Right", "Supine"]:
+    posture, confidence, probabilities = classify_posture_from_video(video_path, target_sec=target_sec)
+    if posture not in POSTURE_KEYS:
         print(f"⚠️ 알 수 없는 체위 클래스: {posture}")
-        return None, 0.0, None
+        return None, 0.0, None, empty_posture_probabilities()
 
     video_url = f"/static/videos/{video_file}"
-    return posture, confidence, video_url
+    return posture, confidence, video_url, probabilities
 
 
-def record_posture_vote(patient_id, posture, confidence):
+def record_posture_vote(patient_id, posture, confidence, probabilities=None):
     """1초마다 들어온 실시간 체위 분류 결과를 환자별 버퍼에 저장한다."""
     now = time.time()
 
@@ -130,7 +173,8 @@ def record_posture_vote(patient_id, posture, confidence):
     POSTURE_VOTES[patient_id].append({
         "t": now,
         "posture": posture,
-        "confidence": float(confidence)
+        "confidence": float(confidence),
+        "probabilities": probabilities or empty_posture_probabilities()
     })
 
     # 메모리가 계속 늘지 않도록 최근 30초만 유지한다.
@@ -167,6 +211,53 @@ def get_majority_posture(patient_id, window_sec=10):
 
     avg_conf = conf_sum[majority_posture] / max(counts[majority_posture], 1)
     return majority_posture, avg_conf, len(votes)
+
+
+def get_recent_votes(patient_id, window_sec=10):
+    now = time.time()
+    return [
+        v for v in POSTURE_VOTES.get(patient_id, [])
+        if now - v["t"] <= window_sec
+    ]
+
+
+def get_vote_distribution(patient_id, window_sec=10):
+    """최근 window_sec 동안의 체위 vote 분포를 0~1 확률 형태로 반환한다."""
+    votes = get_recent_votes(patient_id, window_sec=window_sec)
+
+    if not votes:
+        return empty_posture_probabilities()
+
+    counts = {key: 0 for key in POSTURE_KEYS}
+    for v in votes:
+        posture = v.get("posture")
+        if posture in counts:
+            counts[posture] += 1
+
+    total = max(len(votes), 1)
+    return {key: round(counts[key] / total, 3) for key in POSTURE_KEYS}
+
+
+def get_average_posture_probabilities(patient_id, window_sec=10):
+    """최근 window_sec 동안 누적된 YOLO softmax 확률의 평균을 반환한다."""
+    votes = get_recent_votes(patient_id, window_sec=window_sec)
+    if not votes:
+        return empty_posture_probabilities()
+
+    sums = {key: 0.0 for key in POSTURE_KEYS}
+    usable = 0
+    for v in votes:
+        probs = v.get("probabilities") or {}
+        if not any(float(probs.get(key, 0.0)) > 0 for key in POSTURE_KEYS):
+            continue
+        for key in POSTURE_KEYS:
+            sums[key] += float(probs.get(key, 0.0))
+        usable += 1
+
+    if usable == 0:
+        return empty_posture_probabilities()
+
+    return {key: round(sums[key] / usable, 3) for key in POSTURE_KEYS}
 
 
 def update_posture_summary_timeline(p, posture):
@@ -272,6 +363,7 @@ def update_patients_by_video():
         # 10초마다 실행되는 전체 대시보드 갱신용.
         # 최근 10초 동안 1초 단위로 수집된 YOLO 결과 중 가장 많이 나온 체위를 대표 체위로 사용한다.
         posture, confidence, vote_count = get_majority_posture(patient_id, window_sec=10)
+        probabilities = get_average_posture_probabilities(patient_id, window_sec=10) if vote_count else empty_posture_probabilities()
 
         video_url = None
         if p.get("videoFile"):
@@ -281,7 +373,7 @@ def update_patients_by_video():
 
         # 아직 상세 페이지를 열지 않아 실시간 vote가 없는 경우에는 현재 영상 프레임을 한 번 분류해 fallback으로 사용한다.
         if posture is None:
-            posture, confidence, video_url_from_cls = classify_single_patient_video(p)
+            posture, confidence, video_url_from_cls, probabilities = classify_single_patient_video(p)
             if video_url_from_cls:
                 video_url = video_url_from_cls
 
@@ -292,6 +384,8 @@ def update_patients_by_video():
         p["currentPosition"] = posture
         p["postureConfidence"] = round(confidence, 3)
         p["postureVoteCount10s"] = vote_count
+        p["postureProbabilities"] = probabilities
+        p["postureVoteDistribution10s"] = get_vote_distribution(patient_id, window_sec=10)
 
         if video_url:
             p["videoUrl"] = video_url
@@ -325,13 +419,14 @@ def get_realtime_posture(patient_id):
     # 프론트에서 현재 재생 중인 video.currentTime을 넘기면
     # 실제 화면에 보이는 프레임 기준으로 YOLO 분류한다.
     target_sec = request.args.get("t", default=None, type=float)
-    posture, confidence, video_url = classify_single_patient_video(p, target_sec=target_sec)
+    posture, confidence, video_url, probabilities = classify_single_patient_video(p, target_sec=target_sec)
 
     if posture is None:
         # 서버 오류로 처리하지 않고 기존 체위를 반환한다.
         # 이렇게 해야 프론트의 1초 polling이 중단되지 않는다.
         posture = p.get("currentPosition", "Supine")
         confidence = 0.0
+        probabilities = p.get("postureProbabilities", empty_posture_probabilities())
         if p.get("videoFile"):
             video_url = f"/static/videos/{p.get('videoFile')}"
 
@@ -339,16 +434,23 @@ def get_realtime_posture(patient_id):
     # 위험 점수, 히트맵, 우선순위는 /api/patients에서 10초마다 대표 체위로 갱신한다.
     p["currentPosition"] = posture
     p["postureConfidence"] = round(confidence, 3)
+    p["postureProbabilities"] = probabilities
     if video_url:
         p["videoUrl"] = video_url
 
     # 10초 요약 타임라인 계산을 위해 실시간 분류 결과를 버퍼에 누적한다.
-    record_posture_vote(p.get("id"), posture, confidence)
+    record_posture_vote(p.get("id"), posture, confidence, probabilities)
+    majority_posture, majority_confidence, vote_count = get_majority_posture(p.get("id"), window_sec=10)
 
     return jsonify({
         "id": p.get("id"),
         "currentPosition": p.get("currentPosition"),
         "postureConfidence": p.get("postureConfidence"),
+        "postureProbabilities": p.get("postureProbabilities", empty_posture_probabilities()),
+        "postureVoteCount10s": vote_count,
+        "postureMajority10s": majority_posture,
+        "postureMajorityConfidence10s": round(majority_confidence, 3),
+        "postureVoteDistribution10s": get_vote_distribution(p.get("id"), window_sec=10),
         "videoUrl": p.get("videoUrl"),
         "voteBuffered": True
     })
