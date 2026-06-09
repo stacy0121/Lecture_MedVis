@@ -207,6 +207,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt-primary);min-h
 .yolo-sim-btn{font-size:11px;font-weight:700;padding:7px 12px;border:1px solid var(--border2);border-radius:var(--r-md);background:var(--surface);color:var(--txt-primary);cursor:pointer;width:100%;margin-top:4px;transition:background .12s,border-color .12s}
 .yolo-sim-btn:hover{background:var(--surface2);border-color:var(--txt-tertiary)}
 .yolo-empty-note{font-size:11px;color:var(--txt-tertiary);line-height:1.5;margin-top:8px}
+.yolo-history-sec{width:100%;}
+.yolo-history-sec .yolo-hist-row{height:64px;}
 
 @media(max-width:480px){.dp-metrics{grid-template-columns:repeat(2,1fr)}.dp-two-col,.yolo-two-col{grid-template-columns:1fr}.yolo-metrics-grid{grid-template-columns:1fr}.posture-flow{display:none}.stat-val{font-size:22px}}
 </style>
@@ -373,21 +375,14 @@ function buildYoloPanel(p){
         </div>
         <div class="yolo-empty-note">실제 재생 프레임의 YOLO 결과가 1초마다 갱신되고, 최근 10초 대표 체위는 수집된 vote 기준으로 표시됩니다.</div>
       </div>
-      <div class="yolo-two-col">
-        <div class="yolo-sec">
-          <div class="yolo-sec-title">최근 10초 분류 히스토리</div>
-          <div class="yolo-hist-row" id="yolo-hist-bars-${p.id}"></div>
-          <div class="yolo-hist-labels" id="yolo-hist-labels-${p.id}"></div>
-          <div class="yolo-legend-row">
-            <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#378ADD"></div>좌측위</div>
-            <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#639922"></div>우측위</div>
-            <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#BA7517"></div>앙와위</div>
-          </div>
-        </div>
-        <div class="yolo-sec">
-          <div class="yolo-sec-title">시뮬레이터</div>
-          ${YOLO_POSTURES.map(pos=>`<div class="yolo-slider-row"><span style="width:48px">${pos.key}</span><input type="range" id="yolo-sl-${pos.key.toLowerCase()}-${p.id}" min="0" max="100" value="0" step="1"><span id="yolo-sl-${pos.key.toLowerCase()}-val-${p.id}" style="width:34px;text-align:right;font-family:var(--mono)">0%</span></div>`).join('')}
-          <button class="yolo-sim-btn" id="yolo-apply-btn-${p.id}" type="button">적용 →</button>
+      <div class="yolo-sec yolo-history-sec">
+        <div class="yolo-sec-title">최근 10초 분류 히스토리</div>
+        <div class="yolo-hist-row" id="yolo-hist-bars-${p.id}"></div>
+        <div class="yolo-hist-labels" id="yolo-hist-labels-${p.id}"></div>
+        <div class="yolo-legend-row">
+          <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#378ADD"></div>좌측위</div>
+          <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#639922"></div>우측위</div>
+          <div class="yolo-legend-item"><div class="yolo-legend-dot" style="background:#BA7517"></div>앙와위</div>
         </div>
       </div>
     </div>`;
@@ -424,14 +419,7 @@ function renderYoloHist(id){
   bars.innerHTML=history.map((h,i)=>{const isLast=i===history.length-1;return`<div class="yolo-hist-bar" style="background:${color[h]||'#9B9A93'};height:${isLast?48:28}px;opacity:${0.4+0.06*i};outline:${isLast?'2px solid '+(color[h]||'#9B9A93'):'none'};outline-offset:1px"></div>`;}).join('');
   labels.innerHTML=history.map((_,i)=>{const sec=(i-history.length+1);return`<div class="yolo-hist-lbl">${sec===0?'지금':sec+'s'}</div>`;}).join('');
 }
-function syncYoloSliders(id){
-  const state=YOLO_PANEL_STATE[id];if(!state)return;
-  YOLO_POSTURES.forEach(p=>{
-    const v=clampPct(state.probs[p.key]);
-    const slider=document.getElementById(`yolo-sl-${p.key.toLowerCase()}-${id}`);const val=document.getElementById(`yolo-sl-${p.key.toLowerCase()}-val-${id}`);
-    if(slider)slider.value=v;if(val)val.textContent=v+'%';
-  });
-}
+function syncYoloSliders(id){return;}
 function renderYoloPanel(id){renderYoloClsRows(id);renderYoloMetrics(id);renderYoloHist(id);syncYoloSliders(id);}
 function applyYoloSlider(id){
   if(!YOLO_PANEL_STATE[id])return;
@@ -449,13 +437,8 @@ function pushYoloHistory(id,posture,rerender=true){
   if(rerender)renderYoloPanel(id);
 }
 function initYoloPanel(p){
-  ensureYoloState(p);renderYoloPanel(p.id);
-  YOLO_POSTURES.forEach(pos=>{
-    const slider=document.getElementById(`yolo-sl-${pos.key.toLowerCase()}-${p.id}`);
-    const val=document.getElementById(`yolo-sl-${pos.key.toLowerCase()}-val-${p.id}`);
-    if(slider&&val)slider.addEventListener('input',function(){val.textContent=this.value+'%';});
-  });
-  const btn=document.getElementById(`yolo-apply-btn-${p.id}`);if(btn)btn.addEventListener('click',()=>applyYoloSlider(p.id));
+  ensureYoloState(p);
+  renderYoloPanel(p.id);
 }
 function syncYoloPanelFromPatient(p){if(!p)return;ensureYoloState(p);renderYoloPanel(p.id);}
 function switchDetailTab(id,tab){
