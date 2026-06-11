@@ -1,7 +1,7 @@
 {
   "summary": {
-    "immediate": 2,
-    "caution": 3,
+    "immediate": 3,
+    "caution": 2,
     "stable": 0
   },
   "patients": [
@@ -32,7 +32,7 @@
         "이동성 제한",
         "마찰/전단력"
       ],
-      "recommendedAction": "Left로 변경",
+      "recommendedAction": "좌측위로 즉시 변경 (Braden 11점 · 고위험군)",
       "positionTimeline": {
         "00": "compliant",
         "01": "caution",
@@ -117,7 +117,19 @@
       },
       "priority": 1,
       "videoFile": "P001.mp4",
-      "videoUrl": "/static/videos/P001.mp4"
+      "videoUrl": "/static/videos/P001.mp4",
+      "bradenItems": {
+        "sensoryPerception": 1,
+        "moisture": 3,
+        "activity": 2,
+        "mobility": 1,
+        "nutrition": 3,
+        "frictionShear": 1
+      },
+      "bradenRiskPercent": 71,
+      "bradenRiskLevel": "high",
+      "bradenRiskGroup": "고위험군",
+      "bradenScoreRange": "10-12"
     },
     {
       "id": "P002",
@@ -146,7 +158,7 @@
         "활동 제한",
         "영양 위험"
       ],
-      "recommendedAction": "Left로 변경",
+      "recommendedAction": "좌측위로 즉시 변경 (Braden 11점 · 고위험군)",
       "positionTimeline": {
         "00": "compliant",
         "01": "compliant",
@@ -227,7 +239,19 @@
       },
       "priority": 2,
       "videoFile": "P002.mp4",
-      "videoUrl": "/static/videos/P002.mp4"
+      "videoUrl": "/static/videos/P002.mp4",
+      "bradenItems": {
+        "sensoryPerception": 1,
+        "moisture": 4,
+        "activity": 1,
+        "mobility": 2,
+        "nutrition": 2,
+        "frictionShear": 1
+      },
+      "bradenRiskPercent": 71,
+      "bradenRiskLevel": "high",
+      "bradenRiskGroup": "고위험군",
+      "bradenScoreRange": "10-12"
     },
     {
       "id": "P005",
@@ -251,12 +275,12 @@
       "recommendedPosition": "Left",
       "elapsedMinutes": 28,
       "maxAllowedMinutes": 120,
-      "status": "caution",
+      "status": "immediate",
       "mainRisks": [
         "활동 제한",
         "이동성 제한"
       ],
-      "recommendedAction": "피부 확인",
+      "recommendedAction": "좌측위로 즉시 변경 (Braden 12점 · 고위험군)",
       "positionTimeline": {
         "00": "compliant",
         "01": "caution",
@@ -337,7 +361,19 @@
       },
       "priority": 3,
       "videoFile": "P005.mp4",
-      "videoUrl": "/static/videos/P005.mp4"
+      "videoUrl": "/static/videos/P005.mp4",
+      "bradenItems": {
+        "sensoryPerception": 2,
+        "moisture": 3,
+        "activity": 1,
+        "mobility": 1,
+        "nutrition": 3,
+        "frictionShear": 2
+      },
+      "bradenRiskPercent": 65,
+      "bradenRiskLevel": "high",
+      "bradenRiskGroup": "고위험군",
+      "bradenScoreRange": "10-12"
     },
     {
       "id": "P003",
@@ -365,7 +401,7 @@
       "mainRisks": [
         "영양 위험"
       ],
-      "recommendedAction": "피부 확인",
+      "recommendedAction": "우측위로 변경 준비 (Braden 13점 · 중등도위험군)",
       "positionTimeline": {
         "00": "compliant",
         "01": "caution",
@@ -446,7 +482,19 @@
       },
       "priority": 4,
       "videoFile": "P003.mp4",
-      "videoUrl": "/static/videos/P003.mp4"
+      "videoUrl": "/static/videos/P003.mp4",
+      "bradenItems": {
+        "sensoryPerception": 2,
+        "moisture": 3,
+        "activity": 2,
+        "mobility": 2,
+        "nutrition": 2,
+        "frictionShear": 2
+      },
+      "bradenRiskPercent": 59,
+      "bradenRiskLevel": "moderate",
+      "bradenRiskGroup": "중등도위험군",
+      "bradenScoreRange": "13-14"
     },
     {
       "id": "P004",
@@ -474,7 +522,7 @@
       "mainRisks": [
         "활동 제한"
       ],
-      "recommendedAction": "피부 확인",
+      "recommendedAction": "우측위로 변경 준비 (Braden 13점 · 중등도위험군)",
       "positionTimeline": {
         "00": "caution",
         "01": "compliant",
@@ -563,7 +611,19 @@
       },
       "priority": 5,
       "videoFile": "P004.mp4",
-      "videoUrl": "/static/videos/P004.mp4"
+      "videoUrl": "/static/videos/P004.mp4",
+      "bradenItems": {
+        "sensoryPerception": 1,
+        "moisture": 3,
+        "activity": 1,
+        "mobility": 2,
+        "nutrition": 4,
+        "frictionShear": 2
+      },
+      "bradenRiskPercent": 59,
+      "bradenRiskLevel": "moderate",
+      "bradenRiskGroup": "중등도위험군",
+      "bradenScoreRange": "13-14"
     }
   ]
 }

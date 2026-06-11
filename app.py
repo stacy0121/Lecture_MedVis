@@ -33,6 +33,38 @@ CLASS_NAME_MAP = {
 
 POSTURE_KEYS = ["Left", "Right", "Supine"]
 
+# Braden Scale 실제 산정 기준
+# - 감각인지, 습기, 활동, 이동성, 영양: 각 1~4점
+# - 마찰/전단력: 1~3점
+# - 총점 6~23점이며 낮을수록 욕창 위험이 높다.
+BRADEN_ITEM_LIMITS = {
+    "sensoryPerception": (1, 4),
+    "moisture": (1, 4),
+    "activity": (1, 4),
+    "mobility": (1, 4),
+    "nutrition": (1, 4),
+    "frictionShear": (1, 3),
+}
+
+BRADEN_ITEM_ALIASES = {
+    "sensoryPerception": ["sensoryPerception", "sensory", "perception", "sensory_perception", "감각인지"],
+    "moisture": ["moisture", "습기"],
+    "activity": ["activity", "활동"],
+    "mobility": ["mobility", "이동성"],
+    "nutrition": ["nutrition", "영양"],
+    "frictionShear": ["frictionShear", "friction_shear", "friction", "shear", "마찰전단력", "마찰/전단력"],
+}
+
+BRADEN_RISK_GROUPS = [
+    {"min": 6, "max": 9, "level": "highest", "label": "최고위험군", "status": "immediate"},
+    {"min": 10, "max": 12, "level": "high", "label": "고위험군", "status": "immediate"},
+    {"min": 13, "max": 14, "level": "moderate", "label": "중등도위험군", "status": "caution"},
+    {"min": 15, "max": 18, "level": "low", "label": "저위험군", "status": "caution"},
+    {"min": 19, "max": 23, "level": "safe", "label": "일반/안전", "status": "stable"},
+]
+
+BRADEN_STATUS_PRIORITY = {"immediate": 0, "caution": 1, "stable": 2}
+
 
 def empty_posture_probabilities():
     return {key: 0.0 for key in POSTURE_KEYS}
@@ -77,6 +109,14 @@ def load_initial_data():
         with open("patients.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             GLOBAL_PATIENTS = data.get("patients", [])
+
+        # 서버 시작 직후에도 기존 0~100 가중합이 아니라 Braden Scale 등급이 바로 반영되도록 초기 계산한다.
+        for p in GLOBAL_PATIENTS:
+            update_risk_score(p)
+            update_spot_risks(p)
+            update_status_and_recommendation(p)
+        sort_patients_by_braden_risk()
+
         print(f"✅ {len(GLOBAL_PATIENTS)}명 환자 데이터 로드 완료")
     except Exception as e:
         print(f"❌ 데이터 로드 실패: {e}")
@@ -297,25 +337,158 @@ def update_elapsed_minutes(p, posture):
         p["elapsedMinutes"] = 0
 
 
+def clamp_number(value, low, high, default):
+    try:
+        number = int(round(float(value)))
+    except (TypeError, ValueError):
+        number = default
+    return max(low, min(high, number))
+
+
+def nearest_score_from_risk_factor(value, mapping):
+    """기존 patients.json의 0~100 위험도 값을 Braden 하위항목 점수로 변환한다."""
+    try:
+        risk_value = float(value)
+    except (TypeError, ValueError):
+        return None
+    risk_value = max(0, min(100, risk_value))
+    return min(mapping, key=lambda item: abs(risk_value - item[0]))[1]
+
+
+def get_raw_braden_items(p):
+    for key in ("bradenItems", "bradenScale", "bradenSubscores"):
+        value = p.get(key)
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def normalize_braden_items(raw_items):
+    normalized = {}
+    if not isinstance(raw_items, dict):
+        return normalized
+
+    for canonical_key, aliases in BRADEN_ITEM_ALIASES.items():
+        for alias in aliases:
+            if alias in raw_items:
+                low, high = BRADEN_ITEM_LIMITS[canonical_key]
+                normalized[canonical_key] = clamp_number(raw_items.get(alias), low, high, high)
+                break
+
+    return normalized
+
+
+def infer_braden_items_from_legacy_factors(p):
+    """
+    bradenItems가 없는 기존 데이터 호환용 변환기.
+    기존 riskFactors는 값이 높을수록 위험한 0~100 지표였으므로,
+    Braden 하위항목의 실제 점수(낮을수록 위험)로 되돌린다.
+    sensoryPerception은 기존 데이터에 직접 없으므로 저장된 bradenScore 총점에 맞춰 보정한다.
+    """
+    factors = p.get("riskFactors") or {}
+    if not isinstance(factors, dict):
+        return {}
+
+    quarter_scale = [(0, 4), (25, 3), (50, 2), (75, 1), (100, 1)]
+    third_scale = [(0, 4), (33, 3), (67, 2), (100, 1)]
+    friction_scale = [(0, 3), (33, 2), (67, 1), (100, 1)]
+
+    inferred = {}
+    conversion = {
+        "moisture": quarter_scale,
+        "activity": quarter_scale,
+        "mobility": quarter_scale,
+        "nutrition": third_scale,
+        "frictionShear": friction_scale,
+    }
+
+    for key, mapping in conversion.items():
+        if key in factors:
+            score = nearest_score_from_risk_factor(factors.get(key), mapping)
+            if score is not None:
+                inferred[key] = score
+
+    stored_total = p.get("bradenScore")
+    if stored_total is not None and len(inferred) == 5:
+        stored_total = clamp_number(stored_total, 6, 23, 23)
+        inferred["sensoryPerception"] = clamp_number(stored_total - sum(inferred.values()), 1, 4, 4)
+    elif "pressureDuration" in factors:
+        # pressureDuration은 실제 Braden 항목은 아니지만, 과거 데이터만 있을 때의 안전한 fallback이다.
+        score = nearest_score_from_risk_factor(factors.get("pressureDuration"), quarter_scale)
+        if score is not None:
+            inferred["sensoryPerception"] = score
+
+    if all(key in inferred for key in BRADEN_ITEM_LIMITS):
+        return inferred
+    return {}
+
+
+def calculate_braden_score(p):
+    raw_items = get_raw_braden_items(p)
+    items = normalize_braden_items(raw_items)
+
+    if not all(key in items for key in BRADEN_ITEM_LIMITS):
+        inferred = infer_braden_items_from_legacy_factors(p)
+        if inferred:
+            items.update(inferred)
+
+    if all(key in items for key in BRADEN_ITEM_LIMITS):
+        normalized_items = {}
+        for key, (low, high) in BRADEN_ITEM_LIMITS.items():
+            normalized_items[key] = clamp_number(items.get(key), low, high, high)
+        p["bradenItems"] = normalized_items
+        return sum(normalized_items.values())
+
+    # 하위항목이 전혀 없으면 기존 총점만 6~23 범위로 보정해서 사용한다.
+    return clamp_number(p.get("bradenScore"), 6, 23, 23)
+
+
+def classify_braden_score(score):
+    score = clamp_number(score, 6, 23, 23)
+    group = BRADEN_RISK_GROUPS[-1]
+    for candidate in BRADEN_RISK_GROUPS:
+        if candidate["min"] <= score <= candidate["max"]:
+            group = candidate
+            break
+
+    # 프론트 진행바 호환용 0~100 위험도. Braden 총점은 낮을수록 위험하므로 역방향으로 정규화한다.
+    risk_percent = round((23 - score) / (23 - 6) * 100)
+    return {
+        "score": score,
+        "riskPercent": max(0, min(100, risk_percent)),
+        "riskLevel": group["level"],
+        "riskGroup": group["label"],
+        "scoreRange": f'{group["min"]}-{group["max"]}',
+        "status": group["status"],
+    }
+
+
+def update_braden_assessment(p):
+    assessment = classify_braden_score(calculate_braden_score(p))
+    p["bradenScore"] = assessment["score"]
+    p["bradenRiskPercent"] = assessment["riskPercent"]
+    p["bradenRiskLevel"] = assessment["riskLevel"]
+    p["bradenRiskGroup"] = assessment["riskGroup"]
+    p["bradenScoreRange"] = assessment["scoreRange"]
+    p["status"] = assessment["status"]
+
+    # 기존 프론트 코드와 API 소비자가 riskScore를 계속 읽을 수 있도록 유지한다.
+    # 단, 등급 판정은 riskScore가 아니라 bradenScore로만 수행한다.
+    p["riskScore"] = assessment["riskPercent"]
+    return assessment
+
+
 def update_risk_score(p):
-    max_time = p.get("maxAllowedMinutes", 120)
-    elapsed = p.get("elapsedMinutes", 0)
+    max_time = max(p.get("maxAllowedMinutes", 120), 1)
+    elapsed = max(p.get("elapsedMinutes", 0), 0)
 
-    if "riskFactors" not in p:
-        return
+    # pressureDuration은 Braden Scale 항목이 아니므로 총점 계산에는 넣지 않는다.
+    # 다만 기존 UI의 체위 경과/신체 부위 압력 위험도 표현을 위해 별도 지표로 유지한다.
+    if "riskFactors" in p and isinstance(p["riskFactors"], dict):
+        time_ratio = elapsed / max_time
+        p["riskFactors"]["pressureDuration"] = min(100, int(time_ratio * 100))
 
-    time_ratio = elapsed / max_time
-    p["riskFactors"]["pressureDuration"] = min(100, int(time_ratio * 100))
-
-    f = p["riskFactors"]
-    calculated = (
-        f.get("pressureDuration", 0) * 0.40 +
-        f.get("frictionShear", 0) * 0.20 +
-        f.get("moisture", 0) * 0.15 +
-        f.get("mobility", 0) * 0.15 +
-        f.get("nutrition", 0) * 0.10
-    )
-    p["riskScore"] = round(min(100, max(0, calculated)))
+    update_braden_assessment(p)
 
 
 def update_spot_risks(p):
@@ -336,8 +509,7 @@ def update_spot_risks(p):
 
 def update_status_and_recommendation(p):
     postures = ["Left", "Right", "Supine"]
-    score = p.get("riskScore", 0)
-    p["status"] = "immediate" if score >= 70 else "caution" if score >= 40 else "stable"
+    assessment = update_braden_assessment(p)
 
     usage = {"Left": 0, "Right": 0, "Supine": 0}
     for seg in p.get("heatmap", []):
@@ -348,12 +520,23 @@ def update_status_and_recommendation(p):
     p["recommendedPosition"] = min(candidates, key=lambda pos: usage.get(pos, 0))
 
     label = ACTION_LABELS.get(p["recommendedPosition"], p["recommendedPosition"])
+    braden_note = f'Braden {assessment["score"]}점 · {assessment["riskGroup"]}'
     if p["status"] == "immediate":
-        p["recommendedAction"] = f"{label}로 즉시 변경"
+        p["recommendedAction"] = f"{label}로 즉시 변경 ({braden_note})"
     elif p["status"] == "caution":
-        p["recommendedAction"] = f"{label}로 변경 준비"
+        p["recommendedAction"] = f"{label}로 변경 준비 ({braden_note})"
     else:
-        p["recommendedAction"] = "상태 재평가"
+        p["recommendedAction"] = f"정기 재평가 ({braden_note})"
+
+
+def sort_patients_by_braden_risk():
+    GLOBAL_PATIENTS.sort(key=lambda x: (
+        BRADEN_STATUS_PRIORITY.get(x.get("status"), 9),
+        x.get("bradenScore", 23),
+        -x.get("bradenRiskPercent", 0),
+    ))
+    for i, p in enumerate(GLOBAL_PATIENTS):
+        p["priority"] = i + 1
 
 
 def update_patients_by_video():
@@ -400,9 +583,7 @@ def update_patients_by_video():
         update_spot_risks(p)
         update_status_and_recommendation(p)
 
-    GLOBAL_PATIENTS.sort(key=lambda x: x.get("riskScore", 0), reverse=True)
-    for i, p in enumerate(GLOBAL_PATIENTS):
-        p["priority"] = i + 1
+    sort_patients_by_braden_risk()
 
 
 @app.route("/")

@@ -117,7 +117,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt-primary);min-h
 .factor-name{width:66px;color:var(--txt-secondary);flex-shrink:0;line-height:1.3}
 .factor-track{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
 .factor-fill{height:7px;border-radius:4px;transition:width .5s ease}
-.factor-score{width:26px;text-align:right;font-weight:700;font-family:var(--mono);font-size:11px}
+.factor-score{width:36px;text-align:right;font-weight:700;font-family:var(--mono);font-size:11px}
 .factor-legend{display:flex;gap:12px;font-size:10px;color:var(--txt-tertiary);margin-top:6px}
 .body-map-row{display:flex;gap:16px;align-items:flex-start}
 .body-map-svg{flex:1;min-width:0}
@@ -256,7 +256,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt-primary);min-h
 const PLABELS={Left:'좌측위',Right:'우측위',Supine:'앙와위'};
 const PCOLORS={Left:['#E6F1FB','#B5D4F4','#85B7EB','#378ADD','#185FA5'],Right:['#EAF3DE','#C0DD97','#97C459','#639922','#3B6D11'],Supine:['#FAEEDA','#FAC775','#EF9F27','#BA7517','#854F0B']};
 const BODY_SPOTS={occiput:{label:'후두부',cx:97,cy:28,r:14},scapula_l:{label:'좌견갑골',cx:78,cy:82,r:12},scapula_r:{label:'우견갑골',cx:116,cy:82,r:12},sacrum:{label:'천골/미골',cx:97,cy:178,r:16},heel_l:{label:'좌발뒤꿈치',cx:81,cy:330,r:10},heel_r:{label:'우발뒤꿈치',cx:113,cy:330,r:10}};
-const FNAMES={pressureDuration:'압력 지속',moisture:'습기',activity:'활동',mobility:'이동성',nutrition:'영양',frictionShear:'마찰/전단력',supportSurface:'지지표면'};
+const BRADEN_ITEMS=[
+  {key:'sensoryPerception',label:'감각인지',min:1,max:4},
+  {key:'moisture',label:'습기',min:1,max:4},
+  {key:'activity',label:'활동',min:1,max:4},
+  {key:'mobility',label:'이동성',min:1,max:4},
+  {key:'nutrition',label:'영양',min:1,max:4},
+  {key:'frictionShear',label:'마찰/전단력',min:1,max:3},
+];
 
 const YOLO_POSTURES=[
   {key:'Left',label:'좌측위',color:'#378ADD',fill:'rgba(55,138,221,.18)',textColor:'#185FA5'},
@@ -269,6 +276,20 @@ let patients=[],radarChart=null,currentDetailId=null,openPanels=new Set();
 
 function acol(s){return s==='immediate'?'red':s==='caution'?'amber':'green';}
 function albl(s){return s==='immediate'?'즉시 조치':s==='caution'?'주의':'안정';}
+function riskLabel(p){return (p&&p.bradenRiskGroup)||albl(p&&p.status);}
+function bradenScoreText(p){const v=Number(p&&p.bradenScore);return Number.isFinite(v)?Math.round(v):'—';}
+function bradenRiskPct(p){const raw=(p&&p.bradenRiskPercent!==undefined)?p.bradenRiskPercent:(p&&p.riskScore);const v=Number(raw);return Math.max(0,Math.min(100,Number.isFinite(v)?v:0));}
+function scoreClass(p){return p&&p.status==='immediate'?'danger':p&&p.status==='caution'?'amber':'ok';}
+function getBradenChartItems(p){
+  const raw=(p&&p.bradenItems&&typeof p.bradenItems==='object')?p.bradenItems:{};
+  return BRADEN_ITEMS.map(item=>{
+    const rawScore=Number(raw[item.key]);
+    const score=Number.isFinite(rawScore)?Math.max(item.min,Math.min(item.max,rawScore)):item.max;
+    const risk=item.max===item.min?0:clampPct((item.max-score)/(item.max-item.min)*100);
+    return {...item,score,risk};
+  });
+}
+function bradenItemScoreText(item){return `${Math.round(item.score)}/${item.max}`;}
 function barcol(s){return s==='immediate'?'#C0392B':s==='caution'?'#9A5E00':'#2D6A2D';}
 function fcolor(v){return v>=70?'#C0392B':v>=40?'#9A5E00':'#2D6A2D';}
 function spotColor(v){
@@ -489,7 +510,12 @@ function updateDetailSummaryFromPatient(p){
 
   const scoreEl=document.getElementById(`detail-risk-score-${p.id}`);
   if(scoreEl){
-    scoreEl.textContent=Math.round(p.riskScore);
+    scoreEl.textContent=bradenScoreText(p);
+  }
+
+  const riskSubEl=document.getElementById(`detail-risk-sub-${p.id}`);
+  if(riskSubEl){
+    riskSubEl.textContent=riskLabel(p);
   }
 
   syncYoloPanelFromPatient(p);
@@ -518,16 +544,16 @@ function renderList(data){
       <div class="p-card-header" onclick="toggleInline('${p.id}')">
         <div class="rank-badge ${col}">${p.priority}</div>
         <div class="p-info"><div class="p-name">${p.name}</div><div class="p-meta">${p.room} · ${p.age}세 · ${p.gender}</div></div>
-        <span class="status-pill ${col}">${albl(p.status)}</span>
+        <span class="status-pill ${col}">${riskLabel(p)}</span>
         <div class="posture-flow">
           <span class="p-chip" id="list-current-${p.id}">${PLABELS[p.currentPosition]||p.currentPosition}</span>
           <span class="arrow-icon">→</span>
           <span class="p-chip ${nxtCls}">${PLABELS[p.recommendedPosition]||p.recommendedPosition}</span>
         </div>
-        <span class="score-badge ${col}">${Math.round(p.riskScore)}</span>
+        <span class="score-badge ${col}" title="Braden 점수">${bradenScoreText(p)}</span>
         <button class="detail-btn" onclick="event.stopPropagation();openDetail('${p.id}')">상세 →</button>
       </div>
-      <div class="risk-bar-track"><div class="risk-bar-fill" style="width:${Math.min(p.riskScore,100)}%;background:${barcol(p.status)}"></div></div>
+      <div class="risk-bar-track"><div class="risk-bar-fill" style="width:${bradenRiskPct(p)}%;background:${barcol(p.status)}"></div></div>
       <div class="inline-panel" id="inline-${p.id}" style="display:${openPanels.has(p.id)?'block':'none'}">
         <div class="hm-label"><span>자세 경과 히트맵 · ${hmLen}구간</span><span style="font-family:var(--mono)">${elapsed2str(p.elapsedMinutes)} 경과 · ${isOver?Math.abs(remaining)+'분 초과 ⚠':remaining+'분 남음'}</span></div>
         <div class="hm-grid">${buildHeatmap(p.heatmap||[])}</div>
@@ -540,7 +566,7 @@ function renderList(data){
         <div class="inline-grid">
           <div class="ig-item">현재 체위<div class="ig-val">${PLABELS[p.currentPosition]||p.currentPosition}</div></div>
           <div class="ig-item">권장 행동<div class="ig-val">${p.recommendedAction}</div></div>
-          <div class="ig-item">Braden 점수<div class="ig-val">${p.bradenScore}점</div></div>
+          <div class="ig-item">Braden 점수<div class="ig-val">${bradenScoreText(p)}점 · ${riskLabel(p)}</div></div>
           <div class="ig-item">진단<div class="ig-val" style="font-size:11px">${p.diagnosis}</div></div>
         </div>
         <div class="action-box ${actionCls}">${p.status==='immediate'?'🚨':p.status==='caution'?'⚠️':'✅'} <strong>${p.recommendedAction}</strong></div>
@@ -557,32 +583,33 @@ function openDetail(id){
   document.getElementById('detail-view').style.display='block';
   document.getElementById('detail-nav-title').textContent=p.name+' · '+p.room;
   const isOver=p.elapsedMinutes>p.maxAllowedMinutes;
-  const scoreCol=p.riskScore>=70?'danger':p.riskScore>=40?'amber':'ok';
-  const factorRows=Object.entries(p.riskFactors||{}).map(([k,v])=>`
+  const scoreCol=scoreClass(p);
+  const bradenFactors=getBradenChartItems(p);
+  const factorRows=bradenFactors.map(item=>`
     <div class="factor-row">
-      <span class="factor-name">${FNAMES[k]||k}</span>
-      <div class="factor-track"><div class="factor-fill" style="width:${Math.max(0,Math.min(v,100))}%;background:${fcolor(v)}"></div></div>
-      <span class="factor-score" style="color:${fcolor(v)}">${v}</span>
+      <span class="factor-name">${item.label}</span>
+      <div class="factor-track"><div class="factor-fill" title="${item.label} ${bradenItemScoreText(item)}" style="width:${item.risk}%;background:${fcolor(item.risk)}"></div></div>
+      <span class="factor-score" style="color:${fcolor(item.risk)}">${bradenItemScoreText(item)}</span>
     </div>`).join('');
   const tlCells=buildSummaryTimelineCells(p);
   const highSpots=Object.entries(p.spotRisks||{}).filter(([,v])=>v>=70).map(([k])=>BODY_SPOTS[k]?BODY_SPOTS[k].label:k);
   const spotListHtml=highSpots.length?highSpots.map(s=>`<div class="bleg-spot"><div class="bleg-spot-dot"></div>${s}</div>`).join(''):`<div style="font-size:11px;color:var(--txt-tertiary)">고위험 부위 없음</div>`;
   const alertBox=p.status==='immediate'
-    ?`<div class="alert-box danger"><span class="alert-icon">🚨</span><div><strong>즉시 조치 필요</strong><br>장시간 ${PLABELS[p.currentPosition]} 유지로 압력 및 피부 손상 위험이 높습니다.<br><strong>권장: ${p.recommendedAction}</strong></div></div>`
+    ?`<div class="alert-box danger"><span class="alert-icon">🚨</span><div><strong>즉시 조치 필요</strong><br>Braden Scale ${bradenScoreText(p)}점(${riskLabel(p)}) 기준으로 욕창 위험이 높습니다.<br><strong>권장: ${p.recommendedAction}</strong></div></div>`
     :p.status==='caution'
-    ?`<div class="alert-box warn"><span class="alert-icon">⚠️</span><div><strong>주의 관찰 필요</strong><br>${p.recommendedAction}</div></div>`:'';
+    ?`<div class="alert-box warn"><span class="alert-icon">⚠️</span><div><strong>주의 관찰 필요</strong><br>Braden Scale ${bradenScoreText(p)}점(${riskLabel(p)}) · ${p.recommendedAction}</div></div>`:'';
   document.getElementById('dp-content').innerHTML=`
     <div class="dp-header">
       <div class="dp-hrow">
         <div class="dp-avatar">👤</div>
-        <div><div class="dp-name">${p.name}</div><div class="dp-sub">${p.room} · ${p.age}세 · ${p.gender}<br><span>진단:</span> ${p.diagnosis} &nbsp;·&nbsp; <span>Braden:</span> ${p.bradenScore}점</div></div>
-        <span class="status-pill ${acol(p.status)}" style="margin-left:auto;align-self:flex-start">${albl(p.status)}</span>
+        <div><div class="dp-name">${p.name}</div><div class="dp-sub">${p.room} · ${p.age}세 · ${p.gender}<br><span>진단:</span> ${p.diagnosis} &nbsp;·&nbsp; <span>Braden:</span> ${bradenScoreText(p)}점</div></div>
+        <span class="status-pill ${acol(p.status)}" style="margin-left:auto;align-self:flex-start">${riskLabel(p)}</span>
       </div>
       <div class="dp-metrics">
         <div class="dp-metric"><div class="dp-metric-lbl">현재 체위</div><div class="dp-metric-val blue" id="detail-current-${p.id}" style="font-size:13px;font-family:var(--font)">${PLABELS[p.currentPosition]||p.currentPosition}</div></div>
         <div class="dp-metric"><div class="dp-metric-lbl">권장 체위</div><div class="dp-metric-val ok" id="detail-recommended-${p.id}" style="font-size:13px;font-family:var(--font)">${PLABELS[p.recommendedPosition]||p.recommendedPosition}</div></div>
         <div class="dp-metric"><div class="dp-metric-lbl">경과 시간</div><div class="dp-metric-val ${isOver?'danger':''}" id="detail-elapsed-${p.id}">${elapsed2str(p.elapsedMinutes)}</div><div class="dp-metric-sub">${isOver?'⚠ 초과':'정상 범위'}</div></div>
-        <div class="dp-metric"><div class="dp-metric-lbl">위험 점수</div><div class="dp-metric-val ${scoreCol}" id="detail-risk-score-${p.id}">${Math.round(p.riskScore)}</div><div class="dp-metric-sub">${p.riskScore>=70?'위험':p.riskScore>=40?'주의':'안전'}</div></div>
+        <div class="dp-metric"><div class="dp-metric-lbl">Braden 점수</div><div class="dp-metric-val ${scoreCol}" id="detail-risk-score-${p.id}">${bradenScoreText(p)}</div><div class="dp-metric-sub" id="detail-risk-sub-${p.id}">${riskLabel(p)}</div></div>
       </div>
       ${alertBox}
     </div>
@@ -592,8 +619,8 @@ function openDetail(id){
     </div>
     <section class="detail-tab-panel active" id="risk-tab-${p.id}" role="tabpanel" aria-labelledby="risk-tab-btn-${p.id}">
       <div class="dp-two-col">
-        <div class="dp-section"><div class="dp-sec-title">위험 요인 레이더</div><div style="position:relative;height:180px"><canvas id="radar-chart"></canvas></div></div>
-        <div class="dp-section"><div class="dp-sec-title">요인별 위험도</div>${factorRows}<div class="factor-legend"><span><b style="color:#2D6A2D">■</b> 0–39 안전</span><span><b style="color:#9A5E00">■</b> 40–69 주의</span><span><b style="color:#C0392B">■</b> 70+ 위험</span></div></div>
+        <div class="dp-section"><div class="dp-sec-title">Braden 하위척도 레이더</div><div style="position:relative;height:180px"><canvas id="radar-chart"></canvas></div></div>
+        <div class="dp-section"><div class="dp-sec-title">Braden 하위척도</div>${factorRows}<div class="factor-legend"><span><b style="color:#2D6A2D">■</b> 낮은 위험</span><span><b style="color:#9A5E00">■</b> 주의</span><span><b style="color:#C0392B">■</b> 높은 위험</span></div><div style="font-size:10px;color:var(--txt-tertiary);margin-top:6px">막대는 Braden 점수를 0–100 위험도로 역변환한 값입니다. 점수가 낮을수록 길어집니다.</div></div>
       </div>
       <div class="dp-section"><div class="dp-sec-title">신체 부위별 압력 위험도</div><div class="body-map-row"><div class="body-map-svg">${buildBodySVG(p.spotRisks||{})}</div><div class="body-map-legend"><div class="bleg-title">위험도 범례</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(192,57,43,.4);border:1.5px solid #C0392B"></div>고위험</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(154,94,0,.35);border:1.5px solid #9A5E00"></div>주의</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(45,106,45,.3);border:1.5px solid #2D6A2D"></div>안전</div><div class="bleg-spots-title">주요 고위험</div>${spotListHtml}</div></div></div>
       <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인 <span style="font-size:10px;color:var(--txt-tertiary);font-weight:500">· 10초 대표 체위</span></div><div class="tl-wrap"><div class="tl-row" id="summary-timeline-${p.id}">${tlCells}</div></div></div>
@@ -606,8 +633,8 @@ function openDetail(id){
 
   requestAnimationFrame(()=>{
     const ctx=document.getElementById('radar-chart');if(!ctx)return;
-    const rf=p.riskFactors||{};const fKeys=Object.keys(rf);
-    radarChart=new Chart(ctx,{type:'radar',data:{labels:fKeys.map(k=>FNAMES[k]||k),datasets:[{label:'위험도',data:fKeys.map(k=>rf[k]),backgroundColor:'rgba(192,57,43,.12)',borderColor:'#C0392B',borderWidth:1.5,pointBackgroundColor:'#C0392B',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},color:'#9B9A93'},pointLabels:{font:{size:9},color:'#6B6960'},grid:{color:'rgba(0,0,0,.07)'},angleLines:{color:'rgba(0,0,0,.07)'}}}}});
+    const chartItems=getBradenChartItems(p);
+    radarChart=new Chart(ctx,{type:'radar',data:{labels:chartItems.map(item=>item.label),datasets:[{label:'Braden 하위척도 위험도',data:chartItems.map(item=>item.risk),backgroundColor:'rgba(192,57,43,.12)',borderColor:'#C0392B',borderWidth:1.5,pointBackgroundColor:'#C0392B',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${Math.round(ctx.parsed.r)}% · ${bradenItemScoreText(chartItems[ctx.dataIndex])}`}}},scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},color:'#9B9A93'},pointLabels:{font:{size:9},color:'#6B6960'},grid:{color:'rgba(0,0,0,.07)'},angleLines:{color:'rgba(0,0,0,.07)'}}}}});
   });
 }
 
