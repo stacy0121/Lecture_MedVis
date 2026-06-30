@@ -8,7 +8,7 @@ from ultralytics import YOLO
 app = Flask(__name__)
 
 GLOBAL_PATIENTS = []
-# 1초마다 들어오는 YOLO 체위 분류 결과를 환자별로 10초 동안 모아두는 버퍼
+# 1초마다 들어오는 YOLO 체위 분류 결과를 환자별로 5초 동안 모아두는 버퍼
 POSTURE_VOTES = {}
 
 MODEL_PATH = "models/best.pt"
@@ -224,7 +224,7 @@ def record_posture_vote(patient_id, posture, confidence, probabilities=None):
     ]
 
 
-def get_majority_posture(patient_id, window_sec=10):
+def get_majority_posture(patient_id, window_sec=5):
     """최근 window_sec 동안 가장 많이 나온 체위를 대표 체위로 반환한다."""
     now = time.time()
     votes = [
@@ -253,7 +253,7 @@ def get_majority_posture(patient_id, window_sec=10):
     return majority_posture, avg_conf, len(votes)
 
 
-def get_recent_votes(patient_id, window_sec=10):
+def get_recent_votes(patient_id, window_sec=5):
     now = time.time()
     return [
         v for v in POSTURE_VOTES.get(patient_id, [])
@@ -261,7 +261,7 @@ def get_recent_votes(patient_id, window_sec=10):
     ]
 
 
-def get_vote_distribution(patient_id, window_sec=10):
+def get_vote_distribution(patient_id, window_sec=5):
     """최근 window_sec 동안의 체위 vote 분포를 0~1 확률 형태로 반환한다."""
     votes = get_recent_votes(patient_id, window_sec=window_sec)
 
@@ -278,7 +278,7 @@ def get_vote_distribution(patient_id, window_sec=10):
     return {key: round(counts[key] / total, 3) for key in POSTURE_KEYS}
 
 
-def get_average_posture_probabilities(patient_id, window_sec=10):
+def get_average_posture_probabilities(patient_id, window_sec=5):
     """최근 window_sec 동안 누적된 YOLO softmax 확률의 평균을 반환한다."""
     votes = get_recent_votes(patient_id, window_sec=window_sec)
     if not votes:
@@ -301,7 +301,7 @@ def get_average_posture_probabilities(patient_id, window_sec=10):
 
 
 def update_posture_summary_timeline(p, posture):
-    """10초마다 대표 체위를 최근 체위 변화 타임라인에 추가한다."""
+    """대시보드 갱신 주기마다 대표 체위를 최근 체위 변화 타임라인에 추가한다."""
     if "postureSummaryTimeline" not in p or not isinstance(p["postureSummaryTimeline"], list):
         p["postureSummaryTimeline"] = []
 
@@ -310,7 +310,7 @@ def update_posture_summary_timeline(p, posture):
         "t": time.strftime("%H:%M:%S")
     })
 
-    # 최근 6개 구간만 표시한다. 10초 단위이면 최대 최근 60초 요약이다.
+    # 최근 6개 구간만 표시한다. 15초 단위 갱신이면 최대 최근 90초 요약이다.
     if len(p["postureSummaryTimeline"]) > 6:
         p["postureSummaryTimeline"] = p["postureSummaryTimeline"][-6:]
 
@@ -543,10 +543,10 @@ def update_patients_by_video():
     for p in GLOBAL_PATIENTS:
         patient_id = p.get("id")
 
-        # 10초마다 실행되는 전체 대시보드 갱신용.
-        # 최근 10초 동안 1초 단위로 수집된 YOLO 결과 중 가장 많이 나온 체위를 대표 체위로 사용한다.
-        posture, confidence, vote_count = get_majority_posture(patient_id, window_sec=10)
-        probabilities = get_average_posture_probabilities(patient_id, window_sec=10) if vote_count else empty_posture_probabilities()
+        # 15초마다 호출되는 전체 대시보드 갱신용.
+        # 최근 5초 동안 1초 단위로 수집된 YOLO 결과 중 가장 많이 나온 체위를 대표 체위로 사용한다.
+        posture, confidence, vote_count = get_majority_posture(patient_id, window_sec=5)
+        probabilities = get_average_posture_probabilities(patient_id, window_sec=5) if vote_count else empty_posture_probabilities()
 
         video_url = None
         if p.get("videoFile"):
@@ -566,17 +566,17 @@ def update_patients_by_video():
         update_elapsed_minutes(p, posture)
         p["currentPosition"] = posture
         p["postureConfidence"] = round(confidence, 3)
-        p["postureVoteCount10s"] = vote_count
+        p["postureVoteCount5s"] = vote_count
         p["postureProbabilities"] = probabilities
-        p["postureVoteDistribution10s"] = get_vote_distribution(patient_id, window_sec=10)
+        p["postureVoteDistribution5s"] = get_vote_distribution(patient_id, window_sec=5)
 
         if video_url:
             p["videoUrl"] = video_url
 
-        # 기존 히트맵과 위험도는 10초마다 대표 체위 기준으로 갱신한다.
+        # 기존 히트맵과 위험도는 15초마다 호출되는 전체 갱신 시 대표 체위 기준으로 갱신한다.
         update_heatmap_by_posture(p, posture)
 
-        # 최근 체위 변화 타임라인은 10초마다 대표 체위를 1개씩 추가한다.
+        # 최근 체위 변화 타임라인은 전체 갱신 시 대표 체위를 1개씩 추가한다.
         update_posture_summary_timeline(p, posture)
 
         update_risk_score(p)
@@ -612,26 +612,26 @@ def get_realtime_posture(patient_id):
             video_url = f"/static/videos/{p.get('videoFile')}"
 
     # 실시간 현재 체위 표시용 값만 즉시 갱신한다.
-    # 위험 점수, 히트맵, 우선순위는 /api/patients에서 10초마다 대표 체위로 갱신한다.
+    # 위험 점수, 히트맵, 우선순위는 /api/patients에서 대표 체위로 갱신한다.
     p["currentPosition"] = posture
     p["postureConfidence"] = round(confidence, 3)
     p["postureProbabilities"] = probabilities
     if video_url:
         p["videoUrl"] = video_url
 
-    # 10초 요약 타임라인 계산을 위해 실시간 분류 결과를 버퍼에 누적한다.
+    # 5초 요약 타임라인 계산을 위해 실시간 분류 결과를 버퍼에 누적한다.
     record_posture_vote(p.get("id"), posture, confidence, probabilities)
-    majority_posture, majority_confidence, vote_count = get_majority_posture(p.get("id"), window_sec=10)
+    majority_posture, majority_confidence, vote_count = get_majority_posture(p.get("id"), window_sec=5)
 
     return jsonify({
         "id": p.get("id"),
         "currentPosition": p.get("currentPosition"),
         "postureConfidence": p.get("postureConfidence"),
         "postureProbabilities": p.get("postureProbabilities", empty_posture_probabilities()),
-        "postureVoteCount10s": vote_count,
-        "postureMajority10s": majority_posture,
-        "postureMajorityConfidence10s": round(majority_confidence, 3),
-        "postureVoteDistribution10s": get_vote_distribution(p.get("id"), window_sec=10),
+        "postureVoteCount5s": vote_count,
+        "postureMajority5s": majority_posture,
+        "postureMajorityConfidence5s": round(majority_confidence, 3),
+        "postureVoteDistribution5s": get_vote_distribution(p.get("id"), window_sec=5),
         "videoUrl": p.get("videoUrl"),
         "voteBuffered": True
     })

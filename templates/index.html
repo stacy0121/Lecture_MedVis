@@ -351,15 +351,15 @@ function ensureYoloState(p){
   if(!p)return null;
   const snap=patientYoloSnapshot(p);
   if(!YOLO_PANEL_STATE[p.id]){
-    let history=(p.postureSummaryTimeline||p.timeline||[]).map(x=>x.p).filter(Boolean).slice(-10);
-    if(history.length===0&&Array.isArray(p.heatmap))history=p.heatmap.map(x=>x.p).filter(Boolean).slice(-10);
-    while(history.length<10)history.unshift(p.currentPosition||'Supine');
+    let history=(p.postureSummaryTimeline||p.timeline||[]).map(x=>x.p).filter(Boolean).slice(-5);
+    if(history.length===0&&Array.isArray(p.heatmap))history=p.heatmap.map(x=>x.p).filter(Boolean).slice(-5);
+    while(history.length<5)history.unshift(p.currentPosition||'Supine');
     YOLO_PANEL_STATE[p.id]={probs:snap.probs,confidenceKnown:snap.confidenceKnown,history};
   }else{
     YOLO_PANEL_STATE[p.id].probs=snap.probs;
     YOLO_PANEL_STATE[p.id].confidenceKnown=snap.confidenceKnown;
     if(!Array.isArray(YOLO_PANEL_STATE[p.id].history)||YOLO_PANEL_STATE[p.id].history.length===0){
-      YOLO_PANEL_STATE[p.id].history=Array(10).fill(p.currentPosition||'Supine');
+      YOLO_PANEL_STATE[p.id].history=Array(5).fill(p.currentPosition||'Supine');
     }
   }
   return YOLO_PANEL_STATE[p.id];
@@ -385,7 +385,7 @@ function buildYoloPanel(p){
         <div class="yolo-metrics-grid">
           <div class="yolo-metric-card"><div class="yolo-metric-lbl">현재 분류</div><div class="yolo-metric-val" id="yolo-m-posture-${p.id}" style="font-size:14px;font-family:var(--font)">—</div><div class="yolo-metric-sub">YOLO-cls</div></div>
           <div class="yolo-metric-card"><div class="yolo-metric-lbl">분류 신뢰도</div><div class="yolo-metric-val" id="yolo-m-conf-${p.id}">—</div><div class="yolo-metric-sub" id="yolo-m-conf-sub-${p.id}">수신 대기</div></div>
-          <div class="yolo-metric-card"><div class="yolo-metric-lbl">10초 대표</div><div class="yolo-metric-val" id="yolo-m-majority-${p.id}" style="font-size:14px;font-family:var(--font)">—</div><div class="yolo-metric-sub" id="yolo-m-votes-${p.id}">0 / 10 votes</div></div>
+          <div class="yolo-metric-card"><div class="yolo-metric-lbl">5초 대표</div><div class="yolo-metric-val" id="yolo-m-majority-${p.id}" style="font-size:14px;font-family:var(--font)">—</div><div class="yolo-metric-sub" id="yolo-m-votes-${p.id}">0 / 5 votes</div></div>
         </div>
         <div class="yolo-sec-title" style="margin-bottom:10px">클래스별 softmax 확률</div>
         <div id="yolo-cls-rows-${p.id}"></div>
@@ -394,10 +394,10 @@ function buildYoloPanel(p){
           <div class="yolo-conf-gauge-track"><div class="yolo-conf-gauge-fill" id="yolo-conf-fill-${p.id}" style="width:0%"></div></div>
           <span class="yolo-conf-val" id="yolo-conf-val-txt-${p.id}">—</span>
         </div>
-        <div class="yolo-empty-note">실제 재생 프레임의 YOLO 결과가 1초마다 갱신되고, 최근 10초 대표 체위는 수집된 vote 기준으로 표시됩니다.</div>
+        <div class="yolo-empty-note">실제 재생 프레임의 YOLO 결과가 1초마다 갱신되고, 최근 5초 대표 체위는 수집된 vote 기준으로 표시됩니다.</div>
       </div>
       <div class="yolo-sec yolo-history-sec">
-        <div class="yolo-sec-title">최근 10초 분류 히스토리</div>
+        <div class="yolo-sec-title">최근 5초 분류 히스토리</div>
         <div class="yolo-hist-row" id="yolo-hist-bars-${p.id}"></div>
         <div class="yolo-hist-labels" id="yolo-hist-labels-${p.id}"></div>
         <div class="yolo-legend-row">
@@ -429,14 +429,14 @@ function renderYoloMetrics(id){
   const postureEl=document.getElementById(`yolo-m-posture-${id}`);if(postureEl)postureEl.style.color=meta.textColor;
   const confSub=document.getElementById(`yolo-m-conf-sub-${id}`);if(confSub)confSub.textContent=state.confidenceKnown?(topVal>=80?'높음':topVal>=60?'보통':'낮음'):'수신 대기';
   const fill=document.getElementById(`yolo-conf-fill-${id}`);if(fill){fill.style.width=state.confidenceKnown?Math.round(topVal)+'%':'0%';fill.style.background=topVal>=70?meta.color:'#9A5E00';}
-  const history=state.history||[];const counts={Left:0,Right:0,Supine:0};history.slice(-10).forEach(h=>{if(counts[h]!==undefined)counts[h]++;});
+  const history=state.history||[];const counts={Left:0,Right:0,Supine:0};history.slice(-5).forEach(h=>{if(counts[h]!==undefined)counts[h]++;});
   const majority=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||topKey;const majMeta=yoloMeta(majority);
-  set('m-majority',majMeta.label);set('m-votes',`${counts[majority]||0} / ${Math.min(history.length,10)} votes`);
+  set('m-majority',majMeta.label);set('m-votes',`${counts[majority]||0} / ${Math.min(history.length,5)} votes`);
   const majEl=document.getElementById(`yolo-m-majority-${id}`);if(majEl)majEl.style.color=majMeta.textColor;
 }
 function renderYoloHist(id){
   const state=YOLO_PANEL_STATE[id];const bars=document.getElementById(`yolo-hist-bars-${id}`);const labels=document.getElementById(`yolo-hist-labels-${id}`);if(!state||!bars||!labels)return;
-  const history=(state.history||[]).slice(-10);const color={Left:'#378ADD',Right:'#639922',Supine:'#BA7517'};
+  const history=(state.history||[]).slice(-5);const color={Left:'#378ADD',Right:'#639922',Supine:'#BA7517'};
   bars.innerHTML=history.map((h,i)=>{const isLast=i===history.length-1;return`<div class="yolo-hist-bar" style="background:${color[h]||'#9B9A93'};height:${isLast?48:28}px;opacity:${0.4+0.06*i};outline:${isLast?'2px solid '+(color[h]||'#9B9A93'):'none'};outline-offset:1px"></div>`;}).join('');
   labels.innerHTML=history.map((_,i)=>{const sec=(i-history.length+1);return`<div class="yolo-hist-lbl">${sec===0?'지금':sec+'s'}</div>`;}).join('');
 }
@@ -454,7 +454,7 @@ function pushYoloHistory(id,posture,rerender=true){
   if(!posture)return;
   if(!YOLO_PANEL_STATE[id])YOLO_PANEL_STATE[id]={probs:deriveYoloProbabilities(posture,0).probs,confidenceKnown:false,history:[]};
   YOLO_PANEL_STATE[id].history.push(posture);
-  if(YOLO_PANEL_STATE[id].history.length>10)YOLO_PANEL_STATE[id].history=YOLO_PANEL_STATE[id].history.slice(-10);
+  if(YOLO_PANEL_STATE[id].history.length>5)YOLO_PANEL_STATE[id].history=YOLO_PANEL_STATE[id].history.slice(-5);
   if(rerender)renderYoloPanel(id);
 }
 function initYoloPanel(p){
@@ -477,7 +477,7 @@ function buildBodySVG(sr){
 function buildHeatmap(hm){return(hm||[]).map(s=>`<div class="hm-cell" style="background:${postureFill(s.p,Math.min(s.m/120,1))}" title="${PLABELS[s.p]||s.p} ${s.m}분"></div>`).join('');}
 
 function buildSummaryTimelineCells(p){
-  // postureSummaryTimeline은 백엔드에서 10초마다 최근 10초 동안 가장 많이 나온 체위를 1개씩 추가한 배열이다.
+  // postureSummaryTimeline은 백엔드에서 전체 갱신 시 최근 5초 동안 가장 많이 나온 대표 체위를 1개씩 추가한 배열이다.
   const src=(p.postureSummaryTimeline&&p.postureSummaryTimeline.length>0)
     ?p.postureSummaryTimeline.slice(-6).map(x=>({p:x.p}))
     :(p.heatmap||[]).slice(-6).map(x=>({p:x.p}));
@@ -485,7 +485,7 @@ function buildSummaryTimelineCells(p){
   return src.map((item,i,arr)=>{
     const isLast=i===arr.length-1;
     const cls=(item.p||'Supine').toLowerCase();
-    const timeLabel=isLast?'현재':`-${(arr.length-1-i)*10}초`;
+    const timeLabel=isLast?'현재':`-${(arr.length-1-i)*15}초`;
     return `<div class="tl-cell"><div><span class="tl-chip ${cls}">${PLABELS[item.p]||item.p}</span></div><div class="tl-line-row"><div class="${isLast?'tl-dot active':'tl-dot'}"></div><div class="${isLast?'tl-seg danger':'tl-seg'}"></div></div><div class="tl-time">${timeLabel}</div></div>`;
   }).join('');
 }
@@ -623,7 +623,7 @@ function openDetail(id){
         <div class="dp-section"><div class="dp-sec-title">Braden 하위척도</div>${factorRows}<div class="factor-legend"><span><b style="color:#2D6A2D">■</b> 낮은 위험</span><span><b style="color:#9A5E00">■</b> 주의</span><span><b style="color:#C0392B">■</b> 높은 위험</span></div><div style="font-size:10px;color:var(--txt-tertiary);margin-top:6px">막대는 Braden 점수를 0–100 위험도로 역변환한 값입니다. 점수가 낮을수록 길어집니다.</div></div>
       </div>
       <div class="dp-section"><div class="dp-sec-title">신체 부위별 압력 위험도</div><div class="body-map-row"><div class="body-map-svg">${buildBodySVG(p.spotRisks||{})}</div><div class="body-map-legend"><div class="bleg-title">위험도 범례</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(192,57,43,.4);border:1.5px solid #C0392B"></div>고위험</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(154,94,0,.35);border:1.5px solid #9A5E00"></div>주의</div><div class="bleg-item"><div class="bleg-dot" style="background:rgba(45,106,45,.3);border:1.5px solid #2D6A2D"></div>안전</div><div class="bleg-spots-title">주요 고위험</div>${spotListHtml}</div></div></div>
-      <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인 <span style="font-size:10px;color:var(--txt-tertiary);font-weight:500">· 10초 대표 체위</span></div><div class="tl-wrap"><div class="tl-row" id="summary-timeline-${p.id}">${tlCells}</div></div></div>
+      <div class="dp-section"><div class="dp-sec-title">최근 체위 변화 타임라인 <span style="font-size:10px;color:var(--txt-tertiary);font-weight:500">· 5초 대표 체위</span></div><div class="tl-wrap"><div class="tl-row" id="summary-timeline-${p.id}">${tlCells}</div></div></div>
     </section>
     <section class="detail-tab-panel" id="yolo-tab-${p.id}" role="tabpanel" aria-labelledby="yolo-tab-btn-${p.id}">
       ${buildYoloPanel(p)}
@@ -653,7 +653,8 @@ function applyRealtimePosture(data){
   p.currentPosition=data.currentPosition;
   p.postureConfidence=data.postureConfidence;
   if(data.postureProbabilities)p.postureProbabilities=data.postureProbabilities;
-  if(data.postureVoteCount10s!==undefined)p.postureVoteCount10s=data.postureVoteCount10s;
+  if(data.postureVoteCount5s!==undefined)p.postureVoteCount5s=data.postureVoteCount5s;
+  else if(data.postureVoteCount10s!==undefined)p.postureVoteCount5s=data.postureVoteCount10s;
   if(data.videoUrl)p.videoUrl=data.videoUrl;
 
   ensureYoloState(p);
@@ -715,7 +716,7 @@ async function fetchAndRender(){
 
     // 상세 페이지가 열려 있을 때 openDetail()을 다시 호출하면
     // video 태그가 새로 생성되어 영상이 처음부터 재생된다.
-    // 따라서 10초 갱신 시에는 상세 페이지를 다시 그리지 않고,
+    // 따라서 15초 갱신 시에는 상세 페이지를 다시 그리지 않고,
     // 기존 video 요소는 그대로 유지한다.
     // 목록으로 돌아갔다가 다시 상세로 들어가면 최신 patients 데이터로 다시 렌더링된다.
 
@@ -728,7 +729,7 @@ async function fetchAndRender(){
   }
 }
 fetchAndRender();
-setInterval(fetchAndRender,10000);
+setInterval(fetchAndRender,15000);
 setInterval(fetchRealtimePostures,1000);
 </script>
 </body>
